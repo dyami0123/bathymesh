@@ -17,22 +17,30 @@
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
             python
-            pythonPackages.pip
-            pythonPackages.virtualenv
-            pythonPackages.pandas
-            pythonPackages.pillow
-            pythonPackages.xarray
-            
-            # Development tools
-            pythonPackages.pytest
-            pythonPackages.black
-            pythonPackages.flake8
-            pythonPackages.mypy
+            uv
             
             # System dependencies
             zlib
             libffi
             openssl
+            mesa
+            zstd
+            # libtensorflow
+            libGL
+            xorg.libX11
+            xorg.libXext
+            xorg.libXi
+            xorg.libXrender
+            xorg.libXfixes
+            xorg.libXcursor
+            xorg.libXrandr
+            
+            # C++ runtime libraries
+            gcc-unwrapped.lib
+            stdenv.cc.cc.lib
+            
+            # Additional system libraries
+            udev
             
             # Additional tools that might be useful
             git
@@ -44,40 +52,51 @@
             echo "🐍 Bathymesh Development Environment"
             echo "Python version: $(python --version)"
             echo "Location: $(which python)"
+            echo "UV version: $(uv --version)"
             echo ""
-            echo "Available packages:"
-            echo "  - pandas (data manipulation)"
-            echo "  - pillow (image processing)"
-            echo "  - xarray (labeled arrays)"
+            echo "Using UV for fast Python package management"
             echo ""
-            echo "Development tools:"
-            echo "  - pytest (testing)"
-            echo "  - black (code formatting)"
-            echo "  - flake8 (linting)"
-            echo "  - mypy (type checking)"
+            echo "Available commands:"
+            echo "  - uv sync          (install dependencies)"
+            echo "  - uv add <package> (add new dependency)"
+            echo "  - uv run <script>  (run with dependencies)"
+            echo "  - uv shell         (activate virtual environment)"
             echo ""
             
-            # Set up virtual environment
-            if [ ! -d ".venv" ]; then
-              echo "Creating Python virtual environment..."
-              python -m venv .venv
+            # Use UV to sync dependencies if pyproject.toml exists
+            if [ -f "pyproject.toml" ]; then
+              echo "Syncing dependencies with UV..."
+              uv sync
             fi
-            
-            echo "Activating virtual environment..."
-            source .venv/bin/activate
-            
-            # Install the project in development mode
-            echo "Installing project dependencies..."
-            pip install --upgrade pip
-            pip install -e .
             
             echo ""
             echo "✅ Environment ready! You can now work on your bathymesh project."
+            echo "UV will manage your virtual environment and dependencies."
+
             echo "To exit this environment, type 'exit' or press Ctrl+D"
           '';
 
           # Environment variables
           PYTHONPATH = "${python}/${python.sitePackages}";
+          LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [
+            zlib
+            libffi
+            openssl
+            mesa
+            zstd
+            libGL
+            xorg.libX11
+            xorg.libXext
+            xorg.libXi
+            xorg.libXrender
+            xorg.libXfixes
+            xorg.libXcursor
+            xorg.libXrandr
+            gcc-unwrapped.lib
+            stdenv.cc.cc.lib
+            udev
+          ];
+          
         };
       });
 }
