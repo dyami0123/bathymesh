@@ -7,7 +7,7 @@ import open3d as o3d
 import logging
 
 from .core import HeightmapProcessor, PolygonMeshGenerator, MeshCombiner
-from .triangulation import TriangleTriangulator
+from .triangulation import BaseTriangulator, TriangleTriangulator
 from .io import export_mesh, get_mesh_info
 from .utils import validate_heightmap, create_test_heightmap
 from .data_structures import MeshInfo, MeshScaling, ContourMeshParams
@@ -19,7 +19,7 @@ class BathymeshWorkflow:
     """Main workflow class that orchestrates bathymesh operations."""
     
     heightmap_processor: HeightmapProcessor
-    triangulator: TriangleTriangulator
+    triangulator: BaseTriangulator
     polygon_generator: PolygonMeshGenerator
     mesh_combiner: MeshCombiner
     
@@ -27,7 +27,8 @@ class BathymeshWorkflow:
         self,
         min_polygon_area: float = 1e-2,
         merge_threshold: float = 1e-6,
-        quality_triangulation: bool = True
+        quality_triangulation: bool = True,
+        triangulator: Optional[BaseTriangulator] = None
     ):
         """
         Initialize bathymesh workflow.
@@ -36,9 +37,10 @@ class BathymeshWorkflow:
             min_polygon_area: Minimum area threshold for valid polygons
             merge_threshold: Distance threshold for merging close vertices
             quality_triangulation: Use quality triangulation (Delaunay)
+            triangulator: Optional custom triangulator implementation
         """
         self.heightmap_processor = HeightmapProcessor(min_polygon_area=min_polygon_area)
-        self.triangulator = TriangleTriangulator(quality_mesh=quality_triangulation)
+        self.triangulator = triangulator or TriangleTriangulator(quality_mesh=quality_triangulation)
         self.polygon_generator = PolygonMeshGenerator(triangulator=self.triangulator)
         self.mesh_combiner = MeshCombiner(merge_threshold=merge_threshold)
     

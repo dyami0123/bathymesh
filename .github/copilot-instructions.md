@@ -18,6 +18,16 @@ Bathymesh is a Python-based workflow for converting maps, images, and gridded da
 
 ## Coding Standards
 
+## General Instructions
+
+- Always prioritize readability and clarity.
+- For algorithm-related code, include explanations of the approach used.
+- Write code with good maintainability practices, including comments on why certain design decisions were made.
+- Handle edge cases and write clear exception handling.
+- For libraries or external dependencies, mention their usage and purpose in comments.
+- Use consistent naming conventions and follow language-specific best practices.
+- Write concise, efficient, and idiomatic code that is also easily understandable.
+
 ### Python Standards
 - Follow PEP 8 strictly
 - Use strict mypy typing for all functions and classes
@@ -92,6 +102,10 @@ class MyClass:
 - Test data should be minimal but representative
 - Focus on testing mesh generation pipeline components
 - Include validation of mesh output quality
+- Always include test cases for critical paths of the application.
+- Account for common edge cases like empty inputs, invalid data types, and large datasets.
+- Include comments for edge cases and the expected behavior in those cases.
+- Write unit tests for functions and document them with docstrings explaining the test cases.
 
 ## Visualization & Output
 

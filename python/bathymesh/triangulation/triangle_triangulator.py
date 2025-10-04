@@ -1,12 +1,14 @@
 """Wrapper for the triangle library to provide clean triangulation interface."""
 
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Union
 import numpy as np
 import triangle as tr
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, MultiPolygon
+
+from .base_triangulator import BaseTriangulator
 
 
-class TriangleTriangulator:
+class TriangleTriangulator(BaseTriangulator):
     """Handles polygon triangulation using the triangle library."""
     
     quality_mesh: bool
@@ -20,9 +22,36 @@ class TriangleTriangulator:
         """
         self.quality_mesh = quality_mesh
     
-    def triangulate_polygon(self, polygon: Polygon) -> Tuple[np.ndarray, np.ndarray]:
+    def triangulate_polygon(
+        self, 
+        geometries: Union[Polygon, MultiPolygon, List[Polygon]]
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Triangulate a Shapely polygon using the triangle library.
+        Triangulate polygon geometries using the triangle library.
+        
+        Args:
+            geometries: Single polygon, MultiPolygon, or list of polygons to triangulate
+            
+        Returns:
+            Tuple of (vertices, triangles) where:
+            - vertices: (N, 2) array of 2D vertex coordinates
+            - triangles: (M, 3) array of triangle vertex indices
+            
+        Raises:
+            ValueError: If geometries are invalid or triangulation fails
+        """
+        polygons = self._normalize_geometries(geometries)
+        
+        # For now, handle single polygon - future enhancement for multiple polygons
+        if len(polygons) != 1:
+            raise ValueError("Multiple polygon triangulation not yet implemented")
+            
+        polygon = polygons[0]
+        return self._triangulate_single_polygon(polygon)
+    
+    def _triangulate_single_polygon(self, polygon: Polygon) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Triangulate a single Shapely polygon using the triangle library.
         
         Args:
             polygon: Shapely Polygon object to triangulate

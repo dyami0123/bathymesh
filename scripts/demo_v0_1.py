@@ -22,6 +22,11 @@ def main():
     """Demonstrate bathymesh library functionality."""
     logger.info("Starting bathymesh v0.1 demonstration")
     
+    # Set up output directory
+    output_dir = Path(__file__).parent.parent / "data" / "processed"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    logger.info(f"Output directory: {output_dir}")
+    
     # Create workflow instance
     workflow = BathymeshWorkflow(
         min_polygon_area=1e-2,
@@ -48,7 +53,7 @@ def main():
             scale_x=1.0,
             scale_y=1.0, 
             scale_z=10.0,
-            output_path="simple_heightmap_mesh_v0.1.stl"
+            output_path=output_dir / "simple_heightmap_mesh_v0.1.stl"
         )
         
         mesh_info = workflow.get_mesh_info(simple_mesh)
@@ -66,7 +71,7 @@ def main():
             thresholds=thresholds,
             thickness=1.0,
             extrude=False,
-            output_path="flat_contour_mesh_v0.1.stl"
+            output_path=output_dir / "flat_contour_mesh_v0.1.stl"
         )
         
         mesh_info = workflow.get_mesh_info(flat_mesh)
@@ -84,7 +89,7 @@ def main():
             thresholds=thresholds,
             thickness=0.2,
             extrude=True,
-            output_path="extruded_contour_mesh_v0.1.stl"
+            output_path=output_dir / "extruded_contour_mesh_v0.1.stl"
         )
         
         mesh_info = workflow.get_mesh_info(extruded_mesh)
