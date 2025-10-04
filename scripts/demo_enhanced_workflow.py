@@ -12,7 +12,7 @@ def demo_enhanced_workflow():
     """Demonstrate the enhanced BathymeshWorkflow with configurable mesh generation."""
     
     # Import the enhanced workflow
-    from python.bathymesh import BathymeshWorkflow, MeshType, MeshScaling
+    from bathymesh import BathymeshWorkflow, MeshType, MeshScaling
     
     logger.info("Creating enhanced workflow demo...")
     
