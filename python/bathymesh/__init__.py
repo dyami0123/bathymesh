@@ -14,7 +14,7 @@ from .triangulation import BaseTriangulator, TriangleTriangulator
 from .io import export_mesh, export_stl, get_mesh_info
 from .utils import validate_heightmap, normalize_heightmap, calculate_polygon_stats, create_test_heightmap
 from .workflow import BathymeshWorkflow
-from .data_structures import PolygonStats, MeshInfo, MeshScaling, ContourMeshParams, MeshFormat
+from .data_structures import PolygonStats, MeshInfo, MeshScaling, ContourMeshParams, MeshFormat, MeshType
 
 __version__ = "0.1.0"
 
@@ -42,4 +42,5 @@ __all__ = [
     "MeshScaling",
     "ContourMeshParams", 
     "MeshFormat",
+    "MeshType",
 ]

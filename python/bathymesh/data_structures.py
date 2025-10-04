@@ -35,6 +35,14 @@ class MeshFormat(Enum):
         return [f.value for f in cls]
 
 
+class MeshType(Enum):
+    """Supported mesh generation types."""
+    FLAT = "flat"
+    EXTRUDED = "extruded"
+    SURFACE = "surface"
+    CONTOUR = "contour"
+
+
 @dataclass
 class PolygonStats:
     """Statistics for a collection of polygons."""
