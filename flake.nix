@@ -27,17 +27,27 @@
             zstd
             # libtensorflow
             libGL
+            libGLU  # OpenGL Utility Library (required for gmsh)
+            freeglut  # OpenGL Utility Toolkit
             xorg.libX11
             xorg.libXext
             xorg.libXi
             xorg.libXrender
             xorg.libXfixes
+            xorg.libXft  # X11 font rendering library
             xorg.libXcursor
             xorg.libXrandr
+            xorg.libXinerama  # X11 multi-monitor support
+            fontconfig  # Font configuration library
             
             # C++ runtime libraries
             gcc-unwrapped.lib
             stdenv.cc.cc.lib
+            
+            # Kerberos and authentication libraries (required for PyMeshlab)
+            krb5
+            e2fsprogs  # contains libcom_err
+            keyutils
             
             # Additional system libraries
             udev
@@ -85,16 +95,24 @@
             mesa
             zstd
             libGL
+            libGLU  # OpenGL Utility Library
+            freeglut  # OpenGL Utility Toolkit
             xorg.libX11
             xorg.libXext
             xorg.libXi
             xorg.libXrender
             xorg.libXfixes
+            xorg.libXft  # X11 font rendering library
             xorg.libXcursor
             xorg.libXrandr
+            xorg.libXinerama  # X11 multi-monitor support
+            fontconfig  # Font configuration library
             gcc-unwrapped.lib
             stdenv.cc.cc.lib
             udev
+            krb5
+            e2fsprogs
+            keyutils
           ];
           
         };
