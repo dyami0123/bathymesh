@@ -5,6 +5,8 @@ import numpy as np
 from skimage import measure
 from shapely.geometry import Polygon
 import logging
+import geopandas as gpd
+from matplotlib import pyplot as plt
 
 from ..data_structures import MeshScaling
 
@@ -67,6 +69,37 @@ class HeightmapProcessor:
                 continue
         
         logger.info(f"Extracted {len(polygons)} valid polygons at threshold {threshold}")
+        
+        fig,ax = plt.subplots(figsize=(8,6))
+        debug_gdf = gpd.GeoDataFrame(geometry=polygons)
+        debug_gdf["idx"] = range(len(debug_gdf))
+        debug_gdf.plot(column="idx", cmap="tab20", legend=True, ax=ax)
+        
+        debug_gdf_simplified = debug_gdf.copy()
+        max_segments_per_polygon = 500
+        tolerance = 0.01
+        while True:
+            max_segments = debug_gdf_simplified.geometry.apply(lambda p: len(p.exterior.coords)).max()
+            if max_segments <= max_segments_per_polygon:
+                break
+            tolerance += 0.01
+            debug_gdf_simplified.geometry = debug_gdf_simplified.geometry.simplify(tolerance=tolerance, preserve_topology=True)
+            logger.info(f"Simplifying polygons with tolerance {tolerance:.3f}, max segments now {max_segments}")
+
+        debug_gdf_simplified.plot(column="idx", cmap="tab20", legend=True, ax=ax, alpha=0.5, edgecolor='k', linewidth=0.5)
+
+        plt.title(f"Extracted Polygons at Threshold {threshold}")
+        plt.xlabel("X")
+        plt.ylabel("Y")
+        
+        ax.set_xlim(0, heightmap.shape[1])
+        ax.set_ylim(0, heightmap.shape[0])
+        
+        plt.savefig(f"scripts/debug_outs/extracted_polygons_threshold_{threshold}.png")
+        plt.close()
+        
+        polygons = debug_gdf_simplified.geometry.tolist()
+        
         return polygons
     
     def extract_multi_level_polygons(

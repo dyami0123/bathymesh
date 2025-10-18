@@ -46,8 +46,8 @@ class ExtrudedMeshGenerator(BaseMeshGenerator):
                 raise ValueError("threshold must be provided when use_contours=True")
             polygons = heightmap_handler.extract_contour_polygons(threshold)
             if not polygons:
-                logger.warning("No contours found at threshold, using bounding polygon")
-                polygon = heightmap_handler.get_bounding_polygon()
+                logger.warning(f"No contours found at threshold {threshold}, using empty polygon")
+                polygon = Polygon()
             else:
                 # For now, use the first/largest polygon
                 polygon = max(polygons, key=lambda p: p.area)

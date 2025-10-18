@@ -5,7 +5,7 @@ import open3d as o3d
 from shapely.geometry import Polygon
 import logging
 
-from ..triangulation import BaseTriangulator, GmshTriangulator
+from .. import triangulation as tri
 from .mesh_generators import BaseMeshGenerator, FlatMeshGenerator, ExtrudedMeshGenerator, HeightmapMeshGenerator
 from .heightmap_processor import HeightmapProcessor
 from .mesh_combiner import MeshCombiner
@@ -20,8 +20,8 @@ class PolygonMeshGenerator:
     This class maintains backward compatibility while using the new mesh generator architecture.
     For new code, consider using the specific mesh generators directly with HeightmapHandler.
     """
-    
-    triangulator: BaseTriangulator
+
+    triangulator: tri.BaseTriangulator
     heightmap_processor: HeightmapProcessor
     mesh_combiner: MeshCombiner
     flat_generator: BaseMeshGenerator
@@ -30,7 +30,7 @@ class PolygonMeshGenerator:
     
     def __init__(
         self, 
-        triangulator: Optional[BaseTriangulator] = None,
+        triangulator: Optional[tri.BaseTriangulator] = None,
         heightmap_processor: Optional[HeightmapProcessor] = None,
         mesh_combiner: Optional[MeshCombiner] = None
     ):
@@ -42,7 +42,8 @@ class PolygonMeshGenerator:
             heightmap_processor: Heightmap processor. If None, creates default instance.
             mesh_combiner: Mesh combiner. If None, creates default instance.
         """
-        self.triangulator = triangulator or GmshTriangulator(quality_mesh=True)
+        # self.triangulator = triangulator or GmshTriangulator(quality_mesh=True)
+        self.triangulator = triangulator or tri.ScipyTriangulator(quality_mesh=True)
         self.heightmap_processor = heightmap_processor or HeightmapProcessor()
         self.mesh_combiner = mesh_combiner or MeshCombiner()
         

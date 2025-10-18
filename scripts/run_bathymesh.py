@@ -12,6 +12,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 import numpy as np
 import subprocess
+import matplotlib.pyplot as plt
+import pathlib
+import shutil
 
 # Add bathymesh to path if running directly
 if __name__ == "__main__":
@@ -32,14 +35,14 @@ logger = logging.getLogger(__name__)
 
 # Stage 1: Heightmap Generation Configuration
 HEIGHTMAP_CONFIG = {
-    "size": 25,                    # Grid size (60x60)
+    "size": 300,                    # Grid size (300x300)
     "x_range": (-1, 1),           # X coordinate range
     "y_range": (-1, 1),           # Y coordinate range
     "features": {
-        "central_peak": 1.8,      # Central gaussian peak amplitude
-        "secondary_peak": 0.,    # Secondary peak amplitude
-        "wave_pattern": 0.,      # Sine wave pattern amplitude
-        "noise_level": 0.05       # Random noise level
+        "central_peak": 0.8,      # Central gaussian peak amplitude
+        "secondary_peak": 1.8,    # Secondary peak amplitude
+        "wave_pattern": 1.8,      # Sine wave pattern amplitude
+        "noise_level": 0.0       # Random noise level
     }
 }
 
@@ -52,7 +55,7 @@ MESH_CONFIG = {
         scale_z=1.6              # Z-axis (height) scaling factor
     ),
     "base_height": 0.0,           # Base height for mesh
-    "thickness": 0.8,             # Thickness for extruded meshes
+    "thickness": 0.1,             # Thickness for extruded meshes
     "flat_height": 1.0,           # Height for flat meshes
     "use_contours": False,        # Extract contours instead of full polygon
     "contour_threshold": 0.5,     # Threshold for contour extraction
@@ -60,8 +63,8 @@ MESH_CONFIG = {
     # Multi-level mesh options (set thresholds to enable)
     "multi_level": {
         "enabled": True,         # Set to True for multi-level generation
-        "thresholds": [0.8, 1.2],  # Height thresholds
-        "layer_spacing": 0.4      # Vertical spacing between levels
+        "thresholds": [x for x in np.linspace(0, 2, 10)],  # Height thresholds
+        "layer_spacing": 0.1     # Vertical spacing between levels
     }
 }
 
@@ -111,6 +114,11 @@ def generate_heightmap(config: dict) -> np.ndarray:
         heightmap += features["noise_level"] * np.random.normal(0, 1, (size, size))
     
     logger.info(f"  Generated {size}x{size} heightmap, range: ({heightmap.min():.3f}, {heightmap.max():.3f})")
+    
+    # Add a 2-width border of zeroes to the heightmap
+    heightmap = np.pad(heightmap, pad_width=2, mode='constant', constant_values=0)
+    logger.info(f"  Added 2-width zero border: new shape {heightmap.shape}")
+    
     return heightmap
 
 def generate_mesh(heightmap: np.ndarray, config: dict) -> 'o3d.geometry.TriangleMesh':
@@ -177,6 +185,28 @@ def main():
     try:
         # Stage 1: Generate heightmap
         heightmap = generate_heightmap(HEIGHTMAP_CONFIG)
+
+        shutil.rmtree("scripts/debug_outs", ignore_errors=True)
+        pathlib.Path("scripts/debug_outs").mkdir(exist_ok=True)
+        
+
+        # Visualize the generated heightmap
+        plt.figure(figsize=(6, 5))
+        plt.imshow(heightmap, cmap='terrain', origin='lower')
+        plt.colorbar(label='Height')
+        plt.title('Generated Heightmap')
+        plt.xlabel('X')
+        plt.ylabel('Y')
+        plt.tight_layout()
+        # Draw contour lines at mesh contour thresholds (if multi-level enabled)
+        contour_levels = MESH_CONFIG["multi_level"]["thresholds"] if MESH_CONFIG["multi_level"]["enabled"] else [MESH_CONFIG["contour_threshold"]]
+        contours = plt.contour(heightmap, levels=contour_levels, colors='black', linewidths=0.8, origin='lower')
+        plt.clabel(contours, inline=True, fontsize=8, fmt="%.2f")
+        
+        plt.savefig('scripts/debug_outs/generated_heightmap.png')
+        plt.close()
+        
+        # raise ValueError("Testing error handling")
         
         # Stage 2: Generate mesh
         mesh = generate_mesh(heightmap, MESH_CONFIG)
@@ -186,6 +216,21 @@ def main():
         
         logger.info("=== Completed Successfully! ===")
         logger.info(f"Output saved to: {output_path}")
+        
+        # Open all images in the debug_outs directory in VSCode
+        # debug_dir = pathlib.Path("scripts/debug_outs")
+        # image_files = list(debug_dir.glob("*.png"))
+        # if image_files:
+        #     try:
+        #         subprocess.run(
+        #             ["code"] + [str(img) for img in image_files],
+        #             check=True
+        #         )
+        #         logger.info(f"Opened {len(image_files)} image(s) in VSCode.")
+        #     except Exception as e:
+        #         logger.warning(f"Failed to open images in VSCode: {e}")
+        # else:
+        #     logger.info("No images found in scripts/debug_outs to open.")
         
         # Optionally, open the output file with the default viewer
         try:

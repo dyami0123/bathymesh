@@ -4,9 +4,12 @@ from typing import Tuple, List, Optional, Union
 import numpy as np
 import triangle as tr
 from shapely.geometry import Polygon, MultiPolygon
-
+import logging
 from .base_triangulator import BaseTriangulator
 
+
+
+logger = logging.getLogger(__name__)
 
 class TriangleTriangulator(BaseTriangulator):
     """Handles polygon triangulation using the triangle library."""
@@ -83,9 +86,10 @@ class TriangleTriangulator(BaseTriangulator):
         
         # Triangulate with appropriate flags
         flags = 'p'  # Use PSLG (Planar Straight Line Graph)
-        if self.quality_mesh:
-            flags += 'q'  # Add quality mesh generation
-            
+        # if self.quality_mesh:
+        #     flags += 'q'  # Add quality mesh generation
+        logger.info(f"Triangulating polygon with {len(vertices)} vertices and {len(holes)} holes")
+        logger.debug(f"Triangle flags: {flags}")
         try:
             result = tr.triangulate(data, flags)
             return result['vertices'], result['triangles']
