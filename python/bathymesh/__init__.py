@@ -11,10 +11,10 @@ from .core import (
     HeightmapMeshGenerator
 )
 from .triangulation import BaseTriangulator, TriangleTriangulator
-from .io import export_mesh, export_stl, get_mesh_info
+from .io import export_mesh, get_mesh_info
 from .utils import validate_heightmap, normalize_heightmap, calculate_polygon_stats, create_test_heightmap
 from .workflow import BathymeshWorkflow
-from .data_structures import PolygonStats, MeshInfo, MeshScaling, ContourMeshParams, MeshFormat, MeshType
+from .data_structures import PolygonStats, MeshInfo, MeshScaling, MeshFormat, MeshType
 
 __version__ = "0.1.0"
 
@@ -31,7 +31,6 @@ __all__ = [
     "ExtrudedMeshGenerator",
     "HeightmapMeshGenerator",
     "export_mesh",
-    "export_stl", 
     "get_mesh_info",
     "validate_heightmap",
     "normalize_heightmap",
@@ -40,7 +39,6 @@ __all__ = [
     "PolygonStats",
     "MeshInfo",
     "MeshScaling",
-    "ContourMeshParams", 
     "MeshFormat",
     "MeshType",
 ]

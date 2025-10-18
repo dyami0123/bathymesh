@@ -4,6 +4,7 @@ from typing import Union
 from pathlib import Path
 import open3d as o3d
 import logging
+import traceback
 
 from ..data_structures import MeshInfo, MeshFormat
 
@@ -12,7 +13,6 @@ logger = logging.getLogger(__name__)
 def export_mesh(
     mesh: o3d.geometry.TriangleMesh, 
     filepath: Union[str, Path],
-    format_override: Union[str, None] = None
 ) -> bool:
     """
     Export mesh to file.
@@ -20,7 +20,6 @@ def export_mesh(
     Args:
         mesh: Open3D TriangleMesh to export
         filepath: Output file path
-        format_override: Override format detection (e.g., 'stl', 'ply')
         
     Returns:
         True if export successful, False otherwise
@@ -35,10 +34,7 @@ def export_mesh(
     
     # Determine format
     try:
-        if format_override:
-            mesh_format = MeshFormat.from_extension(format_override)
-        else:
-            mesh_format = MeshFormat.from_extension(filepath.suffix)
+        mesh_format = MeshFormat.from_extension(filepath.suffix)
     except ValueError as e:
         raise ValueError(str(e)) from e
     
@@ -54,24 +50,9 @@ def export_mesh(
         return success
     except Exception as e:
         logger.error(f"Exception during mesh export: {e}")
-        return False
+        logger.debug(traceback.format_exc())
+        raise RuntimeError(f"Failed to export mesh: {e}") from e
 
-
-def export_stl(
-    mesh: o3d.geometry.TriangleMesh, 
-    filepath: Union[str, Path]
-) -> bool:
-    """
-    Export mesh to STL format (convenience function).
-    
-    Args:
-        mesh: Open3D TriangleMesh to export
-        filepath: Output STL file path
-        
-    Returns:
-        True if export successful, False otherwise
-    """
-    return export_mesh(mesh, filepath, format_override='stl')
 
 
 def get_mesh_info(mesh: o3d.geometry.TriangleMesh) -> MeshInfo:
@@ -84,6 +65,9 @@ def get_mesh_info(mesh: o3d.geometry.TriangleMesh) -> MeshInfo:
     Returns:
         MeshInfo dataclass with mesh statistics
     """
+    if len(mesh.vertices) == 0:
+        raise ValueError("Cannot get info from empty mesh")
+    
     mesh_info = MeshInfo(
         num_vertices=len(mesh.vertices),
         num_triangles=len(mesh.triangles),

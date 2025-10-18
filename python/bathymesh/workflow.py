@@ -16,10 +16,10 @@ from .core import (
     ExtrudedMeshGenerator,
     HeightmapMeshGenerator
 )
-from .triangulation import BaseTriangulator, TriangleTriangulator
+from .triangulation import BaseTriangulator, GmshTriangulator
 from .io import export_mesh, get_mesh_info
 from .utils import validate_heightmap, create_test_heightmap
-from .data_structures import MeshInfo, MeshScaling, ContourMeshParams, MeshType
+from .data_structures import MeshInfo, MeshScaling, MeshType
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ class BathymeshWorkflow:
             triangulator: Optional custom triangulator implementation
         """
         self.heightmap_processor = HeightmapProcessor(min_polygon_area=min_polygon_area)
-        self.triangulator = triangulator or TriangleTriangulator(quality_mesh=quality_triangulation)
+        self.triangulator = triangulator or GmshTriangulator()
         self.mesh_combiner = MeshCombiner(merge_threshold=merge_threshold)
         
         # Legacy polygon generator for backward compatibility

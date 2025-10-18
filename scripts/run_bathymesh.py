@@ -11,6 +11,7 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 import numpy as np
+import subprocess
 
 # Add bathymesh to path if running directly
 if __name__ == "__main__":
@@ -31,35 +32,35 @@ logger = logging.getLogger(__name__)
 
 # Stage 1: Heightmap Generation Configuration
 HEIGHTMAP_CONFIG = {
-    "size": 60,                    # Grid size (60x60)
-    "x_range": (-3, 3),           # X coordinate range
-    "y_range": (-3, 3),           # Y coordinate range
+    "size": 25,                    # Grid size (60x60)
+    "x_range": (-1, 1),           # X coordinate range
+    "y_range": (-1, 1),           # Y coordinate range
     "features": {
-        "central_peak": 1.2,      # Central gaussian peak amplitude
-        "secondary_peak": 0.6,    # Secondary peak amplitude
-        "wave_pattern": 0.4,      # Sine wave pattern amplitude
+        "central_peak": 1.8,      # Central gaussian peak amplitude
+        "secondary_peak": 0.,    # Secondary peak amplitude
+        "wave_pattern": 0.,      # Sine wave pattern amplitude
         "noise_level": 0.05       # Random noise level
     }
 }
 
 # Stage 2: Mesh Generation Configuration
 MESH_CONFIG = {
-    "type": MeshType.CONTOUR,     # Options: SURFACE, FLAT, EXTRUDED, CONTOUR
+    "type": MeshType.EXTRUDED,     # Options: SURFACE, FLAT, EXTRUDED, CONTOUR
     "scaling": MeshScaling(
-        scale_x=0.04,             # X-axis scaling factor
-        scale_y=0.04,             # Y-axis scaling factor
-        scale_z=1.5               # Z-axis (height) scaling factor
+        scale_x=0.2,             # X-axis scaling factor
+        scale_y=0.2,             # Y-axis scaling factor
+        scale_z=1.6              # Z-axis (height) scaling factor
     ),
     "base_height": 0.0,           # Base height for mesh
     "thickness": 0.8,             # Thickness for extruded meshes
     "flat_height": 1.0,           # Height for flat meshes
-    "use_contours": True,        # Extract contours instead of full polygon
+    "use_contours": False,        # Extract contours instead of full polygon
     "contour_threshold": 0.5,     # Threshold for contour extraction
     
     # Multi-level mesh options (set thresholds to enable)
     "multi_level": {
         "enabled": True,         # Set to True for multi-level generation
-        "thresholds": [0.3, 0.6, 1.0, 1.4],  # Height thresholds
+        "thresholds": [0.8, 1.2],  # Height thresholds
         "layer_spacing": 0.4      # Vertical spacing between levels
     }
 }
@@ -186,6 +187,12 @@ def main():
         logger.info("=== Completed Successfully! ===")
         logger.info(f"Output saved to: {output_path}")
         
+        # Optionally, open the output file with the default viewer
+        try:
+            subprocess.run(['prusa-slicer', str(output_path)], check=True)
+        except Exception as e:
+            logger.warning(f"Failed to open output file with prusa-slicer: {e}")
+
     except Exception as e:
         logger.error(f"Error: {e}")
         sys.exit(1)

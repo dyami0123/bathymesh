@@ -75,11 +75,3 @@ class MeshScaling:
     scale_z: float = 1.0
 
 
-@dataclass
-class ContourMeshParams:
-    """Parameters for contour mesh generation."""
-    heightmap: 'np.ndarray'
-    thresholds: List[float]
-    thickness: float = 1.0
-    extrude: bool = True
-    output_path: Union[str, Path, None] = None

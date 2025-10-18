@@ -17,6 +17,7 @@ def validate_heightmap(heightmap: np.ndarray) -> None:
     Raises:
         ValueError: If heightmap is invalid
     """
+    
     if not isinstance(heightmap, np.ndarray):
         raise ValueError("Heightmap must be a numpy array")
     
@@ -25,6 +26,9 @@ def validate_heightmap(heightmap: np.ndarray) -> None:
     
     if heightmap.size == 0:
         raise ValueError("Heightmap cannot be empty")
+    
+    if len(heightmap) == 0 or len(heightmap[0]) == 0:
+        raise ValueError("Heightmap dimensions must be greater than zero")
     
     if not np.isfinite(heightmap).all():
         raise ValueError("Heightmap contains non-finite values")

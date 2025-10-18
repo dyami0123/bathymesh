@@ -5,7 +5,7 @@ import open3d as o3d
 from shapely.geometry import Polygon
 import logging
 
-from ..triangulation import BaseTriangulator, TriangleTriangulator
+from ..triangulation import BaseTriangulator, GmshTriangulator
 from .mesh_generators import BaseMeshGenerator, FlatMeshGenerator, ExtrudedMeshGenerator, HeightmapMeshGenerator
 from .heightmap_processor import HeightmapProcessor
 from .mesh_combiner import MeshCombiner
@@ -42,7 +42,7 @@ class PolygonMeshGenerator:
             heightmap_processor: Heightmap processor. If None, creates default instance.
             mesh_combiner: Mesh combiner. If None, creates default instance.
         """
-        self.triangulator = triangulator or TriangleTriangulator(quality_mesh=True)
+        self.triangulator = triangulator or GmshTriangulator(quality_mesh=True)
         self.heightmap_processor = heightmap_processor or HeightmapProcessor()
         self.mesh_combiner = mesh_combiner or MeshCombiner()
         
