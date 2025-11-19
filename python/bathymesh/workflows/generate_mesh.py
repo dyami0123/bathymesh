@@ -1,12 +1,13 @@
+
 from pathlib import Path
 from typing import Union
 
 import open3d as o3d
 
 from bathymesh.data_model import HeightmapData, MeshData
-from bathymesh.config import MeshConfig
+from bathymesh.config import MeshConfig, SimplificationMethod
+from bathymesh.data_model import HeightmapData, MeshData
 from bathymesh.mesh_generator import MeshGenerator
-from bathymesh.mesh_post_processor import SimplificationMethod
 
 
 def generate_mesh(

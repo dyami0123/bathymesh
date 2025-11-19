@@ -1,20 +1,17 @@
 """Mesh processing operations for cleanup and simplification."""
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
 import open3d as o3d
 
+from bathymesh.config import PostProcessParams, SimplificationMethod
+
 logger = logging.getLogger(__name__)
 
 
-class SimplificationMethod(Enum):
-    """Available mesh simplification methods."""
 
-    NONE = "none"
-    VERTEX_CLUSTERING = "vertex_clustering"
-    QUADRIC_DECIMATION = "quadric_decimation"
 
 
 @dataclass
@@ -27,20 +24,8 @@ class MeshPostProcessor:
     sharp edges and overall shape.
     """
 
-    # Basic cleanup
-    remove_degenerate_triangles: bool = True
-    remove_duplicated_vertices: bool = True
-    remove_duplicated_triangles: bool = True
-    remove_unreferenced_vertices: bool = True
-
-    # Vertex merging
-    merge_close_vertices: bool = False
-    merge_vertices_threshold: float = 1e-6
-
-    # Simplification
-    simplification_method: SimplificationMethod = SimplificationMethod.NONE
-    target_triangle_count: int = 100000  # For quadric decimation
-    voxel_size: float = 0.05  # For vertex clustering
+    # Configuration
+    config: PostProcessParams = field(default_factory=PostProcessParams)
 
     def process_mesh(
         self, mesh: o3d.geometry.TriangleMesh
@@ -89,26 +74,26 @@ class MeshPostProcessor:
     ) -> o3d.geometry.TriangleMesh:
         """Apply basic cleanup operations to mesh."""
 
-        if self.remove_degenerate_triangles:
+        if self.config.remove_degenerate_triangles:
             mesh.remove_degenerate_triangles()
             logger.debug("Removed degenerate triangles")
 
-        if self.remove_duplicated_vertices:
+        if self.config.remove_duplicated_vertices:
             mesh.remove_duplicated_vertices()
             logger.debug("Removed duplicated vertices")
 
-        if self.remove_duplicated_triangles:
+        if self.config.remove_duplicated_triangles:
             mesh.remove_duplicated_triangles()
             logger.debug("Removed duplicated triangles")
 
-        if self.remove_unreferenced_vertices:
+        if self.config.remove_unreferenced_vertices:
             mesh.remove_unreferenced_vertices()
             logger.debug("Removed unreferenced vertices")
 
-        if self.merge_close_vertices:
-            mesh.merge_close_vertices(self.merge_vertices_threshold)
+        if self.config.merge_close_vertices:
+            mesh.merge_close_vertices(self.config.merge_vertices_threshold)
             logger.debug(
-                f"Merged vertices within {self.merge_vertices_threshold} threshold"
+                f"Merged vertices within {self.config.merge_vertices_threshold} threshold"
             )
 
         return mesh
@@ -118,30 +103,30 @@ class MeshPostProcessor:
     ) -> o3d.geometry.TriangleMesh:
         """Apply simplification to mesh based on configured method."""
 
-        if self.simplification_method == SimplificationMethod.NONE:
+        if self.config.simplification_method == SimplificationMethod.NONE:
             return mesh
 
         initial_triangles = len(mesh.triangles)
 
-        if self.simplification_method == SimplificationMethod.VERTEX_CLUSTERING:
+        if self.config.simplification_method == SimplificationMethod.VERTEX_CLUSTERING:
             mesh = mesh.simplify_vertex_clustering(
-                voxel_size=self.voxel_size,
+                voxel_size=self.config.voxel_size,
                 contraction=o3d.geometry.SimplificationContraction.Average,
             )
             final_triangles = len(mesh.triangles)
             logger.debug(
                 f"Vertex clustering simplification: {initial_triangles:,} → "
-                f"{final_triangles:,} triangles (voxel_size={self.voxel_size})"
+                f"{final_triangles:,} triangles (voxel_size={self.config.voxel_size})"
             )
 
-        elif self.simplification_method == SimplificationMethod.QUADRIC_DECIMATION:
+        elif self.config.simplification_method == SimplificationMethod.QUADRIC_DECIMATION:
             mesh = mesh.simplify_quadric_decimation(
-                target_number_of_triangles=self.target_triangle_count
+                target_number_of_triangles=self.config.target_triangle_count
             )
             final_triangles = len(mesh.triangles)
             logger.debug(
                 f"Quadric decimation simplification: {initial_triangles:,} → "
-                f"{final_triangles:,} triangles (target={self.target_triangle_count:,})"
+                f"{final_triangles:,} triangles (target={self.config.target_triangle_count:,})"
             )
 
         return mesh
@@ -160,10 +145,11 @@ class MeshPostProcessor:
         Returns:
             Cleaned mesh
         """
-        processor = MeshPostProcessor(
+        config = PostProcessParams(
             merge_close_vertices=True,
             merge_vertices_threshold=merge_threshold,
         )
+        processor = MeshPostProcessor(config=config)
 
         return processor.process_mesh(mesh)
 
@@ -186,9 +172,10 @@ class MeshPostProcessor:
         Returns:
             Simplified mesh
         """
-        processor = MeshPostProcessor(
+        config = PostProcessParams(
             simplification_method=method,
             target_triangle_count=target_triangles,
             voxel_size=voxel_size,
         )
+        processor = MeshPostProcessor(config=config)
         return processor.process_mesh(mesh)

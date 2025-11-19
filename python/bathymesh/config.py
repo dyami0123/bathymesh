@@ -2,12 +2,19 @@
 
 import logging
 from dataclasses import dataclass, field, asdict
+from enum import Enum
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import yaml
 
-from bathymesh.mesh_post_processor import SimplificationMethod
+
+class SimplificationMethod(Enum):
+    """Available mesh simplification methods."""
+
+    NONE = "none"
+    VERTEX_CLUSTERING = "vertex_clustering"
+    QUADRIC_DECIMATION = "quadric_decimation"
 
 logger = logging.getLogger(__name__)
 
@@ -121,5 +128,58 @@ class MeshConfig:
         if "simplification_method" in pp_data:
             pp_data["simplification_method"] = self.post_process.simplification_method.name
 
+        with open(path, "w") as f:
+            yaml.dump(data, f, default_flow_style=False)
+
+
+@dataclass
+class ImageSourceParams:
+    """Parameters for image source handling."""
+    preserve_full_resolution: bool = True
+    max_dimension: Optional[int] = None
+    region: Optional[Tuple[int, int, int, int]] = None
+
+
+@dataclass
+class ImageProcessingParams:
+    """Parameters for image processing."""
+    color_map: Dict[str, Union[float, Dict]] = field(default_factory=dict)
+    default_fuzziness: float = 10.0
+    fill_nan_values: bool = False
+    fill_max_iterations: int = 100
+    fill_neighborhood_size: int = 1
+
+
+@dataclass
+class ImageConfig:
+    """Master configuration for image processing."""
+    source: ImageSourceParams = field(default_factory=ImageSourceParams)
+    processing: ImageProcessingParams = field(default_factory=ImageProcessingParams)
+
+    @classmethod
+    def load_from_yaml(cls, path: Union[str, Path]) -> "ImageConfig":
+        """Load configuration from a YAML file."""
+        path = Path(path)
+        if not path.exists():
+            raise FileNotFoundError(f"Config file not found: {path}")
+
+        with open(path, "r") as f:
+            data = yaml.safe_load(f)
+
+        try:
+            source_data = data.get("source", {})
+            proc_data = data.get("processing", {})
+
+            return cls(
+                source=ImageSourceParams(**source_data),
+                processing=ImageProcessingParams(**proc_data),
+            )
+        except Exception as e:
+            raise ValueError(f"Failed to parse config from {path}: {e}") from e
+
+    def save_to_yaml(self, path: Union[str, Path]) -> None:
+        """Save configuration to a YAML file."""
+        path = Path(path)
+        data = asdict(self)
         with open(path, "w") as f:
             yaml.dump(data, f, default_flow_style=False)

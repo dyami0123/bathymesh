@@ -1,0 +1,70 @@
+processing:
+  color_map:
+    '#000f4a':
+      fuzziness: 30.0
+      value: -50
+    '#0071bd':
+      fuzziness: 30.0
+      value: 37.5
+    '#00a6c0':
+      fuzziness: 30.0
+      value: 55
+    '#064497':
+      fuzziness: 30.0
+      value: 22.5
+    '#08266e':
+      fuzziness: 30.0
+      value: -25
+    '#101320':
+      fuzziness: 30.0
+      value: -100
+    '#14d4ab':
+      fuzziness: 30.0
+      value: 65
+    '#1e88d1':
+      fuzziness: 30.0
+      value: 37.5
+    '#525315':
+      fuzziness: 30.0
+      value: 100
+    '#69bd33':
+      fuzziness: 30.0
+      value: 100
+    '#69f266':
+      fuzziness: 30.0
+      value: 75
+    '#6bf062':
+      fuzziness: 30.0
+      value: 75
+    '#928ecd':
+      fuzziness: 30.0
+      value: 0
+    '#9a85cc':
+      fuzziness: 30.0
+      value: -20
+    '#9ba7e3':
+      fuzziness: 30.0
+      value: 20
+    '#a85ef9':
+      fuzziness: 30.0
+      value: -50
+    '#cbeb01':
+      fuzziness: 30.0
+      value: 85
+    '#e64500':
+      fuzziness: 30.0
+      value: 97.5
+    '#e69901':
+      fuzziness: 30.0
+      value: 92.5
+    '#ffeaba':
+      fuzziness: 30.0
+      value: 100
+  default_fuzziness: 30.0
+  fill_max_iterations: 50
+  fill_nan_values: true
+  fill_neighborhood_size: 1
+source:
+  max_dimension: null
+  preserve_full_resolution: true
+  region: null

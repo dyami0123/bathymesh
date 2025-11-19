@@ -1,12 +1,14 @@
 """Scipy-based triangulator using Delaunay triangulation."""
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Tuple, Union
 
 import numpy as np
 from scipy.spatial import Delaunay
 from shapely.geometry import MultiPolygon, Point, Polygon
+
+from bathymesh.config import TriangulationParams
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +23,7 @@ class Triangulator:
     It does not preserve polygon boundary segments like constrained triangulators.
     """
 
-    add_interior_points: bool = True
-    interior_point_density: float = 1.0
+    config: TriangulationParams = field(default_factory=TriangulationParams)
 
     def triangulate_polygon(
         self, geometries: Union[Polygon, MultiPolygon, List[Polygon]]
@@ -77,7 +78,7 @@ class Triangulator:
         boundary_points = self._extract_boundary_points(polygon)
 
         # Optionally add interior points for better triangulation
-        if self.add_interior_points:
+        if self.config.add_interior_points:
             interior_points = self._generate_interior_points(polygon)
             if len(interior_points) == 0:
                 logger.warning(
@@ -152,7 +153,7 @@ class Triangulator:
 
         # Estimate number of interior points based on area and density
         # Use a simple grid-based approach
-        target_area_per_point = area / (self.interior_point_density * 100)
+        target_area_per_point = area / (self.config.interior_point_density * 100)
         grid_spacing = np.sqrt(target_area_per_point)
 
         # Generate grid points

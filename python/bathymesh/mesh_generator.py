@@ -45,30 +45,10 @@ class MeshGenerator:
         self.config = config
         self.stateless = stateless
 
-        self.mesh_combiner = MeshCombiner(
-            merge_threshold=self.config.combiner.merge_threshold
-        )
-        self.triangulator = Triangulator(
-            add_interior_points=self.config.triangulation.add_interior_points,
-            interior_point_density=self.config.triangulation.interior_point_density,
-        )
-        self.mesh_processor = MeshPostProcessor(
-            remove_degenerate_triangles=self.config.post_process.remove_degenerate_triangles,
-            remove_duplicated_vertices=self.config.post_process.remove_duplicated_vertices,
-            remove_duplicated_triangles=self.config.post_process.remove_duplicated_triangles,
-            remove_unreferenced_vertices=self.config.post_process.remove_unreferenced_vertices,
-            merge_close_vertices=self.config.post_process.merge_close_vertices,
-            merge_vertices_threshold=self.config.post_process.merge_vertices_threshold,
-            simplification_method=self.config.post_process.simplification_method,
-            target_triangle_count=self.config.post_process.target_triangle_count,
-            voxel_size=self.config.post_process.voxel_size,
-        )
-        self.contour_extractor = ContourExtractor(
-            min_polygon_area=self.config.contour.min_polygon_area,
-            simplify_tolerance=self.config.contour.simplify_tolerance,
-            max_segments=self.config.contour.max_segments,
-            min_area_fraction=self.config.contour.min_area_fraction,
-        )
+        self.mesh_combiner = MeshCombiner(config=self.config.combiner)
+        self.triangulator = Triangulator(config=self.config.triangulation)
+        self.mesh_processor = MeshPostProcessor(config=self.config.post_process)
+        self.contour_extractor = ContourExtractor(config=self.config.contour)
         self.threshold_snapshots = {}
 
     def execute(self, heightmap_data: HeightmapData) -> MeshData:

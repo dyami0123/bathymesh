@@ -1,10 +1,12 @@
 """Mesh combination and manipulation utilities."""
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List
 
 import open3d as o3d
+
+from bathymesh.config import CombinerParams
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +15,7 @@ logger = logging.getLogger(__name__)
 class MeshCombiner:
     """Combines and manipulates multiple meshes."""
 
-    merge_threshold: float = 1e-6
+    config: CombinerParams = field(default_factory=CombinerParams)
 
     def combine_meshes(
         self, meshes: List[o3d.geometry.TriangleMesh]
@@ -79,7 +81,7 @@ class MeshCombiner:
         original_triangles = len(mesh.triangles)
 
         # Merge close vertices
-        mesh.merge_close_vertices(self.merge_threshold)
+        mesh.merge_close_vertices(self.config.merge_threshold)
 
         # Remove degenerate triangles and unreferenced vertices
         mesh.remove_degenerate_triangles()

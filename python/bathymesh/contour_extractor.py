@@ -1,7 +1,7 @@
 """Heightmap processing functionality for bathymesh."""
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Union
 
 import cv2
@@ -10,6 +10,8 @@ from shapely.geometry import Polygon
 from shapely.ops import unary_union
 from skimage import measure
 
+from bathymesh.config import ContourParams
+
 logger = logging.getLogger(__name__)
 
 
@@ -17,10 +19,7 @@ logger = logging.getLogger(__name__)
 class ContourExtractor:
     """Processes 2D heightmaps to extract contours and generate polygons."""
 
-    min_polygon_area: float = 1e-2
-    simplify_tolerance: float = 0.5
-    max_segments: int = 100
-    min_area_fraction: float = 0.01
+    config: ContourParams = field(default_factory=ContourParams)
 
     def extract_contour_polygons(
         self,
@@ -89,7 +88,7 @@ class ContourExtractor:
                 if (
                     polygon
                     and polygon.is_valid
-                    and polygon.area > self.min_polygon_area
+                    and polygon.area > self.config.min_polygon_area
                 ):
                     all_raw_polygons.append(polygon)
                     logger.debug(f"Added raw polygon {i} with area {polygon.area:.3f}")
@@ -124,7 +123,7 @@ class ContourExtractor:
 
                 if (
                     not exterior_poly.is_valid
-                    or exterior_poly.area < self.min_polygon_area
+                    or exterior_poly.area < self.config.min_polygon_area
                 ):
                     continue
 
@@ -178,9 +177,9 @@ class ContourExtractor:
         # Filter and simplify
         result_polygons = self._filter_and_simplify_polygons(
             result_polygons,
-            self.simplify_tolerance,
-            self.max_segments,
-            self.min_area_fraction,
+            self.config.simplify_tolerance,
+            self.config.max_segments,
+            self.config.min_area_fraction,
         )
 
         logger.info(
