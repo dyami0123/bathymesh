@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from bathy.image_processing.color_mapper import ColorMapper
+from bathymesh.image_processing.color_mapper import ColorMapper
 from PIL import Image
 from skimage.color import rgb2lab
 from sklearn.cluster import KMeans

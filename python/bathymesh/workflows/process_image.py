@@ -3,8 +3,8 @@ from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
 
-from bathy.data_model import RawHeightmapData
-from bathy.image_processing.image_processor import ImageProcessor
+from bathymesh.data_model import RawHeightmapData
+from bathymesh.image_processing.image_processor import ImageProcessor
 
 
 def process_image(

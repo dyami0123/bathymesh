@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-from bathy.workflows.process_image import process_image
+from bathymesh.workflows.process_image import process_image
 
 if __name__ == "__main__":
     # Configure logging

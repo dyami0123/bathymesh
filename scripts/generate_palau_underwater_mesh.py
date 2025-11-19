@@ -1,12 +1,20 @@
 import logging
 from pathlib import Path
 
-import geopandas as gpd
 import numpy as np
-from bathy.data_model import HeightmapData, MeshUnits
-from bathy.mesh_post_processor import SimplificationMethod
-from bathy.workflows.generate_mesh import generate_mesh
-from matplotlib import pyplot as plt
+from bathymesh.config import (
+    MeshConfig,
+    GenerationParams,
+    ContourParams,
+    CombinerParams,
+    TriangulationParams,
+    PostProcessParams,
+)
+from bathymesh.data_model import HeightmapData, MeshUnits
+from bathymesh.mesh_post_processor import SimplificationMethod
+from bathymesh.project import Project
+from bathymesh.visualization import Visualizer
+from bathymesh.workflows.generate_mesh import generate_mesh
 
 if __name__ == "__main__":
     # Configure logging
@@ -15,33 +23,68 @@ if __name__ == "__main__":
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
-    data_dir = Path(__file__).parent.parent / "data"
+    # Initialize Project
+    # Assuming script is in scripts/ and project root is parent of scripts/
+    project_root = Path(__file__).parent.parent
+    project = Project(project_root)
+    visualizer = Visualizer(project.debug_dir)
 
-    heightmap_path = data_dir / "processed" / "palau_heightmap_bathy.npy"
-    save_mesh_path = data_dir / "meshes" / "palau_underwater_mesh.stl"
+    # Define paths using Project
+    heightmap_path = project.get_processed_path("palau_heightmap_bathy.npy")
+    save_mesh_path = project.get_mesh_path("palau_underwater_mesh.stl")
 
-    save_mesh_path.parent.mkdir(parents=True, exist_ok=True)
-
+    # Load Data
     raw_heightmap_data = np.load(heightmap_path)
 
     exterior_buffer_width = 20
     exterior_buffer_value = 0.0
     offset = 110.0
 
-    thresholds = [x for x in np.linspace(0, 209, 30)]  # Height thresholds
-    # thresholds = [x for x in np.linspace(0, 199, 3)]  # Height thresholds
+    # Create Configuration
+    thresholds = [float(x) for x in np.linspace(0, 209, 30)]
+    
+    config = MeshConfig(
+        generation=GenerationParams(
+            thresholds=thresholds,
+            base_height=0.0,
+            layer_thickness=0.5,
+        ),
+        contour=ContourParams(
+            min_polygon_area=1e-2,
+            simplify_tolerance=0.5,
+            max_segments=3000,
+            min_area_fraction=0.1,
+        ),
+        combiner=CombinerParams(
+            merge_threshold=1e-6,
+        ),
+        triangulation=TriangulationParams(
+            add_interior_points=True,
+            interior_point_density=1.0,
+        ),
+        post_process=PostProcessParams(
+            enabled=True,
+            remove_degenerate_triangles=True,
+            remove_duplicated_vertices=True,
+            remove_duplicated_triangles=True,
+            remove_unreferenced_vertices=True,
+            merge_close_vertices=True,
+            merge_vertices_threshold=1e-6,
+            simplification_method=SimplificationMethod.NONE,
+            target_triangle_count=100000,
+            voxel_size=0.05,
+        ),
+    )
 
-    layer_spacing = 0.5  # Vertical spacing between levels
+    # Save config for future use
+    project.save_config(config, "palau_underwater_mesh")
 
     # Mesh parameters
     units = MeshUnits(
-        units_x=0.2,  # X-axis scaling factor
-        units_y=0.2,  # Y-axis scaling factor
-        units_z=1.6,  # Z-axis (height) scaling factor
+        units_x=0.2,
+        units_y=0.2,
+        units_z=1.6,
     )
-
-    base_height = 0.0  # Base height for mesh
-    thickness = 0.5  # Thickness for extruded meshes
 
     create_visuals: bool = True
 
@@ -57,63 +100,21 @@ if __name__ == "__main__":
 
     generated_mesh, generator = generate_mesh(
         heightmap_data=heightmap_data,
-        thresholds=thresholds,
+        config=config,
         save_path=save_mesh_path,
-        base_height=base_height,
-        layer_thickness=thickness,
-        post_process_mesh=True,
-        # Contour extraction
-        contour_extraction_min_polygon_area=1e-2,
-        contour_extraction_simplify_tolerance=0.5,
-        contour_extraction_max_segments=3000,
-        contour_extraction_min_area_fraction=0.1,
-        # Combiner
-        combiner_merge_threshold=1e-6,
-        # Triangulator
-        triangulator_add_interior_points=True,
-        triangulator_interior_point_density=1.0,
-        # Post-processing: Basic cleanup
-        post_p_remove_degenerate_triangles=True,
-        post_p_remove_duplicated_vertices=True,
-        post_p_remove_duplicated_triangles=True,
-        post_p_remove_unreferenced_vertices=True,
-        # Post-processing: Vertex merging
-        post_p_merge_close_vertices=True,
-        post_p_merge_vertices_threshold=1e-6,
-        # Post-processing: Simplification
-        post_p_simplification_method=SimplificationMethod.NONE,
-        post_p_target_triangle_count=100000,
-        post_p_voxel_size=0.05,
         stateless=not create_visuals,
     )
 
     if create_visuals:
-        # Plot Contours
-        fig, ax = plt.subplots(figsize=(10, 10))
-
-        max_idx = max(generator.threshold_snapshots.keys())
-        for idx, snap in generator.threshold_snapshots.items():
-            contours = snap.contours
-            gdf = gpd.GeoDataFrame(geometry=contours)
-            gdf["level"] = idx
-            gdf.plot(
-                ax=ax,
-                alpha=0.5,
-                edgecolor="black",
-                label=f"Threshold {idx}",
-                cmap="viridis",
-                vmin=0,
-                vmax=max_idx,
-                legend=True,
-            )
-
-        ax.set_title("Extracted Contours at Different Height Thresholds")
-
-        ax.set_xlabel("X Coordinate")
-        ax.set_ylabel("Y Coordinate")
-        ax.legend(title="Height Thresholds")
-        plt.grid(True)
-
-        save_path = data_dir / "debug_outs" / "palau_contours.png"
-        save_path.parent.mkdir(parents=True, exist_ok=True)
-        plt.savefig(save_path)
+        visualizer.plot_contours(
+            generator.threshold_snapshots,
+            title="Extracted Contours at Different Height Thresholds",
+            filename="palau_contours.png",
+        )
+        
+        # Also demonstrate stack visualization
+        visualizer.plot_contour_stack(
+            generator.threshold_snapshots,
+            title="Contour Stack Visualization",
+            filename="palau_contour_stack.png",
+        )

@@ -7,11 +7,12 @@ import open3d as o3d
 from shapely.geometry import Polygon
 from tqdm import tqdm
 
-from bathy.contour_extractor import ContourExtractor
-from bathy.data_model import HeightmapData, MeshData
-from bathy.mesh_combiner import MeshCombiner
-from bathy.mesh_post_processor import MeshPostProcessor, SimplificationMethod
-from bathy.triangulator import Triangulator
+from bathymesh.contour_extractor import ContourExtractor
+from bathymesh.config import MeshConfig
+from bathymesh.data_model import HeightmapData, MeshData
+from bathymesh.mesh_combiner import MeshCombiner
+from bathymesh.mesh_post_processor import MeshPostProcessor, SimplificationMethod
+from bathymesh.triangulator import Triangulator
 
 logger = logging.getLogger(__name__)
 
@@ -31,45 +32,7 @@ class MeshGenerator:
     # Mesh Generation Parameters
     #############################
 
-    thresholds: list[float] = field(default_factory=list)
-    base_height: float = 0
-    layer_thickness: float = 1.0
-    post_process_mesh: bool = True
-
-    # Contour Extraction
-    contour_extractor: ContourExtractor = field(default_factory=ContourExtractor)
-    contour_extraction_min_polygon_area: float = 1e-2
-    contour_extraction_simplify_tolerance: float = 0.5
-    contour_extraction_max_segments: int = 100
-    contour_extraction_min_area_fraction: float = 0.01
-
-    # Combiner
-    combiner: MeshCombiner = field(default_factory=MeshCombiner)
-    combiner_merge_threshold: float = 1e-6
-
-    # Triangulator
-    triangulator: Triangulator = field(default_factory=Triangulator)
-    triangulator_add_interior_points: bool = True
-    triangulator_interior_point_density: float = 1.0
-
-    # PostProcessing
-    mesh_processor: MeshPostProcessor = field(default_factory=MeshPostProcessor)
-
-    # Basic cleanup
-    post_p_remove_degenerate_triangles: bool = True
-    post_p_remove_duplicated_vertices: bool = True
-    post_p_remove_duplicated_triangles: bool = True
-    post_p_remove_unreferenced_vertices: bool = True
-
-    # Vertex merging
-    post_p_merge_close_vertices: bool = False
-    post_p_merge_vertices_threshold: float = 1e-6
-
-    # Simplification
-    post_p_simplification_method: SimplificationMethod = SimplificationMethod.NONE
-    post_p_target_triangle_count: int = 100000  # For quadric decimation
-    post_p_voxel_size: float = 0.05  # For vertex clustering
-
+    config: MeshConfig
     stateless: bool = True
 
     ##############################
@@ -78,31 +41,33 @@ class MeshGenerator:
 
     threshold_snapshots: dict[int, ThresholdSnapshot] = field(default_factory=dict)
 
-    def __init__(self, **kwargs) -> None:
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+    def __init__(self, config: MeshConfig, stateless: bool = True) -> None:
+        self.config = config
+        self.stateless = stateless
 
-        self.mesh_combiner = MeshCombiner(merge_threshold=self.combiner_merge_threshold)
+        self.mesh_combiner = MeshCombiner(
+            merge_threshold=self.config.combiner.merge_threshold
+        )
         self.triangulator = Triangulator(
-            add_interior_points=self.triangulator_add_interior_points,
-            interior_point_density=self.triangulator_interior_point_density,
+            add_interior_points=self.config.triangulation.add_interior_points,
+            interior_point_density=self.config.triangulation.interior_point_density,
         )
         self.mesh_processor = MeshPostProcessor(
-            remove_degenerate_triangles=self.post_p_remove_degenerate_triangles,
-            remove_duplicated_vertices=self.post_p_remove_duplicated_vertices,
-            remove_duplicated_triangles=self.post_p_remove_duplicated_triangles,
-            remove_unreferenced_vertices=self.post_p_remove_unreferenced_vertices,
-            merge_close_vertices=self.post_p_merge_close_vertices,
-            merge_vertices_threshold=self.post_p_merge_vertices_threshold,
-            simplification_method=self.post_p_simplification_method,
-            target_triangle_count=self.post_p_target_triangle_count,
-            voxel_size=self.post_p_voxel_size,
+            remove_degenerate_triangles=self.config.post_process.remove_degenerate_triangles,
+            remove_duplicated_vertices=self.config.post_process.remove_duplicated_vertices,
+            remove_duplicated_triangles=self.config.post_process.remove_duplicated_triangles,
+            remove_unreferenced_vertices=self.config.post_process.remove_unreferenced_vertices,
+            merge_close_vertices=self.config.post_process.merge_close_vertices,
+            merge_vertices_threshold=self.config.post_process.merge_vertices_threshold,
+            simplification_method=self.config.post_process.simplification_method,
+            target_triangle_count=self.config.post_process.target_triangle_count,
+            voxel_size=self.config.post_process.voxel_size,
         )
         self.contour_extractor = ContourExtractor(
-            min_polygon_area=self.contour_extraction_min_polygon_area,
-            simplify_tolerance=self.contour_extraction_simplify_tolerance,
-            max_segments=self.contour_extraction_max_segments,
-            min_area_fraction=self.contour_extraction_min_area_fraction,
+            min_polygon_area=self.config.contour.min_polygon_area,
+            simplify_tolerance=self.config.contour.simplify_tolerance,
+            max_segments=self.config.contour.max_segments,
+            min_area_fraction=self.config.contour.min_area_fraction,
         )
         self.threshold_snapshots = {}
 
@@ -119,17 +84,17 @@ class MeshGenerator:
 
         logger.info("Starting multi-level mesh generation")
         logger.info(f"Heightmap shape: {heightmap_data.data.shape}")
-        logger.info(f"Number of levels: {len(self.thresholds)}")
+        logger.info(f"Number of levels: {len(self.config.generation.thresholds)}")
 
         # Generate meshes for each level
         all_meshes = []
 
-        for level_idx, threshold in enumerate(self.thresholds):
+        for level_idx, threshold in enumerate(self.config.generation.thresholds):
             self.threshold_snapshots[level_idx] = ThresholdSnapshot(threshold=threshold)
 
-            level_height = self.base_height + (level_idx * self.layer_thickness)
+            level_height = self.config.generation.base_height + (level_idx * self.config.generation.layer_thickness)
             logger.info(
-                f"Processing level {level_idx + 1}/{len(self.thresholds)} "
+                f"Processing level {level_idx + 1}/{len(self.config.generation.thresholds)} "
                 f"at threshold {threshold}, height {level_height}"
             )
 
@@ -140,7 +105,7 @@ class MeshGenerator:
                 level_height,
             )
 
-            if self.post_process_mesh:
+            if self.config.post_process.enabled:
                 mesh_ls = [self.mesh_processor.process_mesh(mesh) for mesh in mesh_ls]
 
             for mesh in mesh_ls:
@@ -161,7 +126,7 @@ class MeshGenerator:
         logger.info(f"Combined {len(all_meshes)} level meshes")
 
         # Process combined mesh if enabled
-        if self.post_process_mesh:
+        if self.config.post_process.enabled:
             logger.info("Processing combined mesh...")
             combined_mesh = self.mesh_processor.process_mesh(combined_mesh)
 

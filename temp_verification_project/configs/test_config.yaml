@@ -1,0 +1,28 @@
+combiner:
+  merge_threshold: 1.0e-06
+contour:
+  max_segments: 100
+  min_area_fraction: 0.01
+  min_polygon_area: 0.0
+  simplify_tolerance: 0.5
+generation:
+  base_height: 0.0
+  layer_thickness: 1.0
+  thresholds:
+  - 1.0
+  - 3.0
+  - 5.0
+post_process:
+  enabled: true
+  merge_close_vertices: false
+  merge_vertices_threshold: 1.0e-06
+  remove_degenerate_triangles: true
+  remove_duplicated_triangles: true
+  remove_duplicated_vertices: true
+  remove_unreferenced_vertices: true
+  simplification_method: NONE
+  target_triangle_count: 100000
+  voxel_size: 0.05
+triangulation:
+  add_interior_points: true
+  interior_point_density: 1.0
