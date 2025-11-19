@@ -41,7 +41,7 @@ if __name__ == "__main__":
     offset = 110.0
 
     # Create Configuration
-    thresholds = [float(x) for x in np.linspace(0, 209, 30)]
+    thresholds = [float(x) for x in np.linspace(0, 209, 5)]
     
     config = MeshConfig(
         generation=GenerationParams(

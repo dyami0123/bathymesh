@@ -21,7 +21,7 @@ if __name__ == "__main__":
     data_dir = Path(__file__).parent.parent / "data"
 
     # Define your image path and color mapping
-    image_path = data_dir / "raw" / "palau-bathymetry-map.png"
+    image_path = data_dir / "raw" / "palau-bathymetry-map.jpg"
     save_path = data_dir / "processed" / "palau_heightmap_bathy.npy"
 
     gnd = 100  # Ground level reference

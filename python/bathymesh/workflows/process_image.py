@@ -36,7 +36,7 @@ def process_image(
         fill_max_iterations=fill_max_iterations,
         fill_neighborhood_size=fill_neighborhood_size,
     )
-
+    save_path.parent.mkdir(parents=True, exist_ok=True)
     if save_path is not None:
         with open(save_path, "wb") as f:
             np.save(f, heightmap_data)
