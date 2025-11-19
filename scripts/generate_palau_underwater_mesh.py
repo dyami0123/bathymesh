@@ -9,9 +9,9 @@ from bathymesh.config import (
     CombinerParams,
     TriangulationParams,
     PostProcessParams,
+    SimplificationMethod,
 )
 from bathymesh.data_model import HeightmapData, MeshUnits
-from bathymesh.mesh_post_processor import SimplificationMethod
 from bathymesh.project import Project
 from bathymesh.visualization import Visualizer
 from bathymesh.workflows.generate_mesh import generate_mesh
