@@ -147,8 +147,6 @@ impl ImageProcessor {
         for _iteration in 0..max_iterations {
             let mut new_heightmap = heightmap.clone();
             let mut pixels_filled_this_iteration = 0;
-            let mut change = 0.0;
-            let mut filled_count = 0;
 
             for y in 0..height {
                 for x in 0..width {

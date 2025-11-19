@@ -1,0 +1,1 @@
+export LIBCLANG_PATH=/opt/homebrew/Cellar/llvm/21.1.5/lib DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/Cellar/llvm/21.1.5/lib

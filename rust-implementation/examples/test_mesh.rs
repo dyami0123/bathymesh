@@ -3,7 +3,7 @@ use image::GenericImageView;
 use rust_implementation::config::ImageConfig;
 use rust_implementation::image_processor::ImageProcessor;
 use rust_implementation::core::{ContourExtractor, ContourParams, Triangulator, MeshCombiner};
-use rust_implementation::viz::MeshVisualizer;
+use rust_implementation::viz::{MeshVisualizer, ContourVisualizer};
 
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
@@ -40,10 +40,12 @@ fn main() -> Result<()> {
     println!("Processed heightmap: {}x{}", width, height);
 
     // Extract contours at multiple thresholds
-    let thresholds = vec![-60.0, -30.0, 0.0, 30.0, 60.0];
+    let thresholds = vec![10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0];
     let contour_params = ContourParams {
-        min_area: 1000.0,
-        simplify_tolerance: 3.0,
+        min_polygon_area: 100.0,
+        simplify_tolerance: 2.0,
+        max_segments: 3000,
+        min_area_fraction: 0.01,
     };
     
     let extractor = ContourExtractor::new(contour_params);
@@ -94,6 +96,11 @@ fn main() -> Result<()> {
         height as usize,
         &app_name,
     )?;
+
+    // Visualize contours in the same recording
+    println!("Visualizing contours...");
+    let contour_viz = ContourVisualizer::new();
+    contour_viz.visualize_contours(&snapshots, &app_name)?;
 
     // Visualize individual mesh layers in the same recording
     println!("Visualizing mesh layers...");

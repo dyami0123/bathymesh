@@ -40,10 +40,12 @@ fn main() -> Result<()> {
     println!("Processed heightmap: {}x{}", width, height);
 
     // Extract contours at multiple thresholds
-    let thresholds = vec![-80.0, -60.0, -40.0, -20.0, 0.0, 20.0, 40.0, 60.0, 80.0];
+    let thresholds = vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9];
     let contour_params = ContourParams {
-        min_area: 500.0,
+        min_polygon_area: 500.0,
         simplify_tolerance: 2.0,
+        max_segments: 100,
+        min_area_fraction: 0.01,
     };
     
     let extractor = ContourExtractor::new(contour_params);
