@@ -13,6 +13,7 @@ dependencies = [
     "matplotlib>=3.10.6",
     "numpy>=2.3.3",
     "open3d>=0.19.0",
+    "opencv-python>=4.11.0.86",
     "pandas>=2.3.2",
     "pillow>=11.3.0",
     "pygmsh>=7.1.17",
@@ -21,6 +22,8 @@ dependencies = [
     "pytest-cov>=7.0.0",
     "scikit-image>=0.25.2",
     "shapely>=2.1.2",
+    "svgwrite>=1.4.3",
+    "tqdm>=4.66.0",
     "triangle>=20250106",
     "xarray>=2025.9.0",
 ]

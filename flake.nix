@@ -25,6 +25,7 @@
             openssl
             mesa
             zstd
+            glib  # Provides libgthread-2.0.so.0
             # libtensorflow
             libGL
             libGLU  # OpenGL Utility Library (required for gmsh)
@@ -94,6 +95,7 @@
             openssl
             mesa
             zstd
+            glib  # Provides libgthread-2.0.so.0
             libGL
             libGLU  # OpenGL Utility Library
             freeglut  # OpenGL Utility Toolkit

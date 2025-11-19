@@ -177,3 +177,5 @@ Thumbs.db
 
 *.stl
 *.png
+*.npy
+*.xcf
