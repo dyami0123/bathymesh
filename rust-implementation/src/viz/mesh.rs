@@ -106,7 +106,7 @@ impl MeshVisualizer {
                 // Add edge outlines with Z offset
                 let (boundary_edges, interior_edges) = extract_edges(mesh);
                 
-                // Draw boundary edges (outer contour) in thicker black
+                // Draw boundary edges (outer contour_generation) in thicker black
                 let offset_boundary: Vec<Vec<[f32; 3]>> = boundary_edges.iter().map(|edge| {
                     edge.iter().map(|&[x, y, z]| [x, y, z + z_offset]).collect()
                 }).collect();

@@ -1,13 +1,13 @@
 use anyhow::Result;
 use image::GenericImageView;
 use rust_implementation::config::ImageConfig;
-use rust_implementation::image_processor::ImageProcessor;
 use rust_implementation::core::{ContourExtractor, ContourParams};
+use rust_implementation::image_processor::ImageProcessor;
 use rust_implementation::viz::ContourVisualizer;
 
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
-    
+
     if args.len() < 3 {
         eprintln!("Usage: {} <image> <config>", args[0]);
         std::process::exit(1);
@@ -34,20 +34,20 @@ fn main() -> Result<()> {
     )?;
 
     // Process image
-    let heightmap = processor.process_image_to_heightmap(&image, &config.processing)?;
+    let heightmap = processor.process_image_to_heightmap(&image, &config.image_processing)?;
     let (width, height) = image.dimensions();
 
     println!("Processed heightmap: {}x{}", width, height);
 
     // Extract contours at multiple thresholds
-    let thresholds = vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9];
+    let thresholds = vec![10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0];
     let contour_params = ContourParams {
         min_polygon_area: 500.0,
         simplify_tolerance: 2.0,
         max_segments: 100,
         min_area_fraction: 0.01,
     };
-    
+
     let extractor = ContourExtractor::new(contour_params);
     let snapshots = extractor.extract_multi_threshold(
         &heightmap,

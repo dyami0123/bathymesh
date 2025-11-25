@@ -6,9 +6,9 @@ use std::io::Write;
 use std::path::PathBuf;
 
 use rust_implementation::config::ImageConfig;
+use rust_implementation::core::{ContourExtractor, MeshCombiner, MeshGenerator};
 use rust_implementation::image_processor::ImageProcessor;
-use rust_implementation::viz::{HeightmapVisualizer, ContourVisualizer};
-use rust_implementation::core::contour_extractor::{ContourExtractor, ContourParams};
+use rust_implementation::viz::{ContourVisualizer, HeightmapVisualizer, MeshVisualizer};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -21,14 +21,6 @@ struct Args {
     #[arg(short, long)]
     config: PathBuf,
 
-    /// Path to save the output heightmap (raw f64 bytes)
-    #[arg(short, long)]
-    output: PathBuf,
-
-    /// Extract contours at specified thresholds (comma-separated, e.g., "0.3,0.5,0.7")
-    #[arg(long)]
-    contours: Option<String>,
-
     /// Launch Rerun visualization
     #[arg(short, long)]
     rerun: bool,
@@ -37,7 +29,7 @@ struct Args {
 fn main() -> Result<()> {
     let args = Args::parse();
 
-    println!("Bathymesh Rust Prototype");
+    println!("Bathymesh Rust");
     println!("------------------------");
 
     // Load config
@@ -55,95 +47,86 @@ fn main() -> Result<()> {
     )?;
 
     // Process image
-    let heightmap = processor.process_image_to_heightmap(&image, &config.processing)?;
+    let heightmap = processor.process_image_to_heightmap(&image, &config.image_processing)?;
 
-    // Save output
-    // For simplicity, we'll save as raw bytes (f64 little endian)
-    // Python can read this with np.fromfile(path, dtype=np.float64).reshape(h, w)
-    let mut file = File::create(&args.output).context("Failed to create output file")?;
-    
-    // Write dimensions first? No, let's just write raw data.
-    // Actually, to be useful, we should probably print dimensions so user knows how to reshape.
     let (width, height) = image.dimensions();
-    println!("Output dimensions: {}x{}", width, height);
-    
-    let buffer: Vec<u8> = heightmap
-        .iter()
-        .flat_map(|v| v.to_le_bytes().to_vec())
-        .collect();
-        
-    file.write_all(&buffer).context("Failed to write output file")?;
-    
-    println!("Saved heightmap to {:?}", args.output);
+    println!("Heightmap dimensions: {}x{}", width, height);
 
-    // Extract contours if requested
-    if let Some(ref contour_thresholds) = args.contours {
-        println!("\nExtracting contours...");
-        let thresholds: Vec<f64> = contour_thresholds
-            .split(',')
-            .filter_map(|s| s.trim().parse().ok())
-            .collect();
-        
-        if thresholds.is_empty() {
-            eprintln!("Warning: No valid thresholds provided for contour extraction");
-        } else {
-            let params = ContourParams::default();
-            let extractor = ContourExtractor::new(params);
-            
-            let mut snapshots = Vec::new();
-            
-            for threshold in thresholds {
-                let snapshot = extractor.extract_contours(
-                    &heightmap,
-                    width as usize,
-                    height as usize,
-                    threshold,
-                )?;
-                
-                println!(
-                    "Threshold {:.2}: extracted {} polygons",
-                    snapshot.threshold,
-                    snapshot.contours.len()
-                );
-                
-                // Print some stats about the contours
-                if !snapshot.contours.is_empty() {
-                    use geo::Area;
-                    let total_area: f64 = snapshot.contours.iter()
-                        .map(|p| p.unsigned_area())
-                        .sum();
-                    let max_area = snapshot.contours.iter()
-                        .map(|p| p.unsigned_area())
-                        .max_by(|a, b| a.partial_cmp(b).unwrap())
-                        .unwrap_or(0.0);
-                    println!(
-                        "  Total area: {:.2}, Max area: {:.2}",
-                        total_area,
-                        max_area
-                    );
-                }
-                
-                snapshots.push(snapshot);
-            }
-            
-            // Visualize contours in Rerun if requested
-            if args.rerun && !snapshots.is_empty() {
-                println!("\nVisualizing contours in Rerun...");
-                let contour_viz = ContourVisualizer::new();
-                contour_viz.visualize_contours(&snapshots, "Bathymesh Contours")?;
-            }
-        }
+    // Extract contours at multiple thresholds
+    let thresholds = &config.mesh_generation.thresholds;
+
+    let extractor = ContourExtractor::new(config.contour_generation);
+    let snapshots = extractor.extract_multi_threshold(
+        &heightmap,
+        width as usize,
+        height as usize,
+        thresholds,
+    )?;
+
+    println!("Extracted contours at {} threshold levels", snapshots.len());
+
+    // Generate extruded meshes for each layer
+    let mesh_generator = MeshGenerator::new(config.mesh_generation.clone());
+    let mut layers = Vec::new();
+
+    for (i, snapshot) in snapshots.iter().enumerate() {
+        let level_height = config.mesh_generation.base_height
+            + (i as f64 * config.mesh_generation.layer_thickness);
+
+        println!(
+            "Generating layer {} at threshold {:.0}, height {:.1}",
+            i, snapshot.threshold, level_height
+        );
+
+        let meshes =
+            mesh_generator.generate_extruded_mesh(&snapshot.contours, Some(level_height))?;
+
+        println!(
+            "  Generated {} meshes with {} total triangles",
+            meshes.len(),
+            meshes.iter().map(|m| m.triangle_count()).sum::<usize>()
+        );
+
+        layers.push((snapshot.threshold, meshes));
     }
 
-    // Launch Rerun visualization for heightmap if requested (and no contours)
-    if args.rerun && args.contours.is_none() {
-        let visualizer = HeightmapVisualizer::new();
-        visualizer.visualize_heightmap(
+    // Combine all layers into a single mesh
+    let combiner = MeshCombiner::new();
+    let combined_mesh =
+        combiner.combine_layers(&layers.iter().map(|(_, m)| m.clone()).collect::<Vec<_>>());
+
+    println!("\nCombined mesh statistics:");
+    println!("  Vertices: {}", combined_mesh.vertex_count());
+    println!("  Triangles: {}", combined_mesh.triangle_count());
+
+    // Create unique app IDs with timestamps to avoid state persistence
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+
+    let app_name = format!("Bathymesh Complete View {}", timestamp);
+
+    if args.rerun {
+        // Visualize the heightmap first (as a reference layer)
+        println!("\nVisualizing heightmap...");
+        let heightmap_viz = HeightmapVisualizer::new();
+        heightmap_viz.visualize_heightmap(
             &heightmap,
             width as usize,
             height as usize,
-            "Bathymesh Heightmap",
+            &app_name,
         )?;
+
+        // Visualize contours in the same recording
+        println!("Visualizing contours...");
+        let contour_viz = ContourVisualizer::new();
+        contour_viz.visualize_contours(&snapshots, &app_name)?;
+
+        // Visualize individual mesh layers in the same recording
+        println!("Visualizing mesh layers...");
+        let visualizer = MeshVisualizer::new();
+        visualizer.visualize_layers(&layers, &app_name)?;
     }
 
     Ok(())

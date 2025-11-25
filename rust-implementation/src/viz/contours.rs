@@ -1,7 +1,7 @@
 use anyhow::Result;
 use rerun::RecordingStreamBuilder;
 
-use crate::core::ThresholdSnapshot;
+use crate::core::ThresholdContours;
 
 pub struct ContourVisualizer;
 
@@ -13,26 +13,31 @@ impl ContourVisualizer {
     /// Visualize contours from threshold snapshots in Rerun
     pub fn visualize_contours(
         &self,
-        snapshots: &[ThresholdSnapshot],
+        snapshots: &[ThresholdContours],
         app_name: &str,
     ) -> Result<()> {
-        println!("Starting Rerun visualization for {} threshold levels", snapshots.len());
+        println!(
+            "Starting Rerun visualization for {} threshold levels",
+            snapshots.len()
+        );
 
         // Initialize Rerun
-        let rec = RecordingStreamBuilder::new(app_name)
-            .spawn()?;
+        let rec = RecordingStreamBuilder::new(app_name).spawn()?;
 
         // Log each threshold level
         for snapshot in snapshots {
             let threshold_str = format!("contours/threshold_{:.0}", snapshot.threshold);
-            
-            println!("Logging {} contours at threshold {:.2}", 
-                     snapshot.contours.len(), snapshot.threshold);
+
+            println!(
+                "Logging {} contours at threshold {:.2}",
+                snapshot.contours.len(),
+                snapshot.threshold
+            );
 
             // Convert each polygon to a LineString for visualization
             for (i, polygon) in snapshot.contours.iter().enumerate() {
                 let exterior = polygon.exterior();
-                
+
                 // Extract points from the exterior ring
                 let points: Vec<[f32; 3]> = exterior
                     .points()
@@ -43,8 +48,7 @@ impl ContourVisualizer {
                     // Log as a LineStrip3D
                     rec.log(
                         format!("{}/contour_{}", threshold_str, i),
-                        &rerun::LineStrips3D::new([points.clone()])
-                            .with_radii([0.5]),
+                        &rerun::LineStrips3D::new([points.clone()]).with_radii([0.5]),
                     )?;
                 }
             }
@@ -60,7 +64,7 @@ impl ContourVisualizer {
             )?;
         }
 
-        println!("Rerun contour visualization ready!");
+        println!("Rerun contour_generation visualization ready!");
 
         Ok(())
     }

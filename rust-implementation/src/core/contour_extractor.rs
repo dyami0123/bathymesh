@@ -1,37 +1,18 @@
+use crate::config::ContourParams;
 use anyhow::Result;
-use geo::{Polygon, LineString, Coord};
-use geo::algorithm::simplify::Simplify;
 use geo::algorithm::bool_ops::BooleanOps;
-use geo::{Area, MultiPolygon, CoordsIter};
+use geo::algorithm::simplify::Simplify;
+use geo::{Area, CoordsIter, MultiPolygon};
+use geo::{Coord, LineString, Polygon};
 use opencv::{
-    core::{Mat, Vector, Point},
+    core::{Mat, Point, Vector},
     imgproc::{self, CHAIN_APPROX_SIMPLE, RETR_CCOMP},
     prelude::*,
 };
 
-/// Parameters for contour extraction
-#[derive(Debug, Clone)]
-pub struct ContourParams {
-    pub min_polygon_area: f64,
-    pub simplify_tolerance: f64,
-    pub max_segments: usize,
-    pub min_area_fraction: f64,
-}
-
-impl Default for ContourParams {
-    fn default() -> Self {
-        Self {
-            min_polygon_area: 1e-2,
-            simplify_tolerance: 0.5,
-            max_segments: 100,
-            min_area_fraction: 0.01,
-        }
-    }
-}
-
 /// Represents a snapshot of contours at a specific threshold
 #[derive(Debug, Clone)]
-pub struct ThresholdSnapshot {
+pub struct ThresholdContours {
     pub threshold: f64,
     pub contours: Vec<Polygon<f64>>,
 }
@@ -46,7 +27,7 @@ impl ContourExtractor {
     }
 
     /// Extract contours from a heightmap at a specific threshold
-    /// 
+    ///
     /// This matches the Python implementation exactly, handling nested contours
     /// and creating polygons with holes where appropriate.
     pub fn extract_contours(
@@ -55,7 +36,7 @@ impl ContourExtractor {
         width: usize,
         height: usize,
         threshold: f64,
-    ) -> Result<ThresholdSnapshot> {
+    ) -> Result<ThresholdContours> {
         println!("Extracting contours at threshold {:.2}", threshold);
 
         // Create binary mask where values >= threshold
@@ -74,19 +55,19 @@ impl ContourExtractor {
         // Find contours with hierarchy using OpenCV (matches Python's cv2.findContours)
         let mut contours_cv: Vector<Vector<Point>> = Vector::new();
         let mut hierarchy = Mat::default();
-        
+
         imgproc::find_contours_with_hierarchy(
             &mask_mat,
             &mut contours_cv,
             &mut hierarchy,
-            RETR_CCOMP,           // 2-level hierarchy: external contours and holes
+            RETR_CCOMP, // 2-level hierarchy: external contours and holes
             CHAIN_APPROX_SIMPLE,
             opencv::core::Point::new(0, 0),
         )?;
 
         if contours_cv.is_empty() {
             println!("No contours found at threshold {:.2}", threshold);
-            return Ok(ThresholdSnapshot {
+            return Ok(ThresholdContours {
                 threshold,
                 contours: vec![],
             });
@@ -94,7 +75,7 @@ impl ContourExtractor {
 
         println!("Found {} contours with OpenCV", contours_cv.len());
 
-        // Extract all raw polygons using skimage-like approach (contour crate)
+        // Extract all raw polygons using skimage-like approach (contour_generation crate)
         let mut mask_f64 = vec![0.0; width * height];
         for (i, &value) in mask_u8.iter().enumerate() {
             mask_f64[i] = value as f64;
@@ -117,7 +98,7 @@ impl ContourExtractor {
                 if coords.len() >= 3 {
                     let line_string = LineString::from(coords);
                     let geo_polygon = Polygon::new(line_string, vec![]);
-                    
+
                     if geo_polygon.unsigned_area() > self.params.min_polygon_area {
                         all_raw_polygons.push(geo_polygon);
                     }
@@ -143,21 +124,21 @@ impl ContourExtractor {
                 continue;
             }
 
-            // Convert external contour to polygon
-            let contour = contours_cv.get(i)?;
-            let coords = self.opencv_contour_to_coords(&contour)?;
-            
+            // Convert external contour_generation to polygon
+            let contour_generation = contours_cv.get(i)?;
+            let coords = self.opencv_contour_to_coords(&contour_generation)?;
+
             if coords.len() < 3 {
                 continue;
             }
 
             let exterior_poly = Polygon::new(LineString::from(coords.clone()), vec![]);
-            
+
             if exterior_poly.unsigned_area() < self.params.min_polygon_area {
                 continue;
             }
 
-            // Find holes (children of this contour)
+            // Find holes (children of this contour_generation)
             let mut holes = Vec::new();
             let first_child = hier[2];
 
@@ -166,7 +147,7 @@ impl ContourExtractor {
                 while child_idx != -1 {
                     let hole_contour = contours_cv.get(child_idx as usize)?;
                     let hole_coords = self.opencv_contour_to_coords(&hole_contour)?;
-                    
+
                     if hole_coords.len() >= 3 {
                         holes.push(LineString::from(hole_coords));
                         processed.insert(child_idx as usize);
@@ -194,8 +175,11 @@ impl ContourExtractor {
         // Skip expensive union operations for now - just use result_polygons directly
         // The union operations are O(n²) and extremely slow for large polygon counts
         // TODO: Implement spatial partitioning or cascaded union if needed
-        println!("Using {} result polygons directly (skipping union operations)", result_polygons.len());
-        
+        println!(
+            "Using {} result polygons directly (skipping union operations)",
+            result_polygons.len()
+        );
+
         let mut holes_removed_polys = result_polygons;
 
         // Filter and simplify
@@ -206,13 +190,17 @@ impl ContourExtractor {
             self.params.min_area_fraction,
         );
 
-        println!("Final polygon count after filtering and simplification: {}", holes_removed_polys.len());
+        println!(
+            "Final polygon count after filtering and simplification: {}",
+            holes_removed_polys.len()
+        );
 
         // Remove interior geometries if they occupy >= 95% of total area
         let mut cleaned_polygons = Vec::new();
         for poly in holes_removed_polys {
             if !poly.interiors().is_empty() {
-                let hole_area: f64 = poly.interiors()
+                let hole_area: f64 = poly
+                    .interiors()
                     .iter()
                     .map(|ring| Polygon::new(ring.clone(), vec![]).unsigned_area())
                     .sum();
@@ -221,8 +209,10 @@ impl ContourExtractor {
                 if hole_area >= 0.95 * total_area {
                     let cleaned_poly = Polygon::new(poly.exterior().clone(), vec![]);
                     cleaned_polygons.push(cleaned_poly);
-                    println!("Removed interiors from polygon (hole area {:.2} >= 95% of {:.2})", 
-                             hole_area, total_area);
+                    println!(
+                        "Removed interiors from polygon (hole area {:.2} >= 95% of {:.2})",
+                        hole_area, total_area
+                    );
                 } else {
                     cleaned_polygons.push(poly);
                 }
@@ -231,24 +221,27 @@ impl ContourExtractor {
             }
         }
 
-        Ok(ThresholdSnapshot {
+        Ok(ThresholdContours {
             threshold,
             contours: cleaned_polygons,
         })
     }
 
-    /// Convert OpenCV contour Vector to vector of coordinates
-    fn opencv_contour_to_coords(&self, contour: &Vector<Point>) -> Result<Vec<Coord<f64>>> {
+    /// Convert OpenCV contour_generation Vector to vector of coordinates
+    fn opencv_contour_to_coords(
+        &self,
+        contour_generation: &Vector<Point>,
+    ) -> Result<Vec<Coord<f64>>> {
         let mut coords = Vec::new();
-        
-        for i in 0..contour.len() {
-            let point = contour.get(i)?;
-            coords.push(Coord { 
-                x: point.x as f64, 
-                y: point.y as f64 
+
+        for i in 0..contour_generation.len() {
+            let point = contour_generation.get(i)?;
+            coords.push(Coord {
+                x: point.x as f64,
+                y: point.y as f64,
             });
         }
-        
+
         Ok(coords)
     }
 
@@ -265,15 +258,20 @@ impl ContourExtractor {
         }
 
         // Filter by area
-        let max_area = polygons.iter()
+        let max_area = polygons
+            .iter()
             .map(|p| p.unsigned_area())
             .max_by(|a, b| a.partial_cmp(b).unwrap())
             .unwrap_or(0.0);
-        
+
         let area_threshold = max_area * min_area_fraction;
         polygons.retain(|p| p.unsigned_area() >= area_threshold);
-        
-        println!("Filtered to {} polygons with area >= {:.3}", polygons.len(), area_threshold);
+
+        println!(
+            "Filtered to {} polygons with area >= {:.3}",
+            polygons.len(),
+            area_threshold
+        );
 
         if polygons.is_empty() {
             return vec![];
@@ -282,21 +280,23 @@ impl ContourExtractor {
         // Simplify if needed
         let mut tolerance = simplify_tolerance;
         loop {
-            let max_seg = polygons.iter()
+            let max_seg = polygons
+                .iter()
                 .map(|p| p.exterior().coords_count())
                 .max()
                 .unwrap_or(0);
-            
+
             if max_seg <= max_segments {
                 break;
             }
-            
+
             tolerance += 0.1;
-            polygons = polygons.iter()
-                .map(|p| p.simplify(&tolerance))
-                .collect();
-            
-            println!("Simplified with tolerance {:.3}, max segments now {}", tolerance, max_seg);
+            polygons = polygons.iter().map(|p| p.simplify(&tolerance)).collect();
+
+            println!(
+                "Simplified with tolerance {:.3}, max segments now {}",
+                tolerance, max_seg
+            );
         }
 
         polygons
@@ -309,7 +309,7 @@ impl ContourExtractor {
         width: usize,
         height: usize,
         thresholds: &[f64],
-    ) -> Result<Vec<ThresholdSnapshot>> {
+    ) -> Result<Vec<ThresholdContours>> {
         let mut snapshots = Vec::new();
 
         for &threshold in thresholds {

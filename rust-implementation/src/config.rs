@@ -1,8 +1,8 @@
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::Path;
-use anyhow::{Context, Result};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ImageSourceParams {
@@ -61,12 +61,55 @@ impl Default for ImageProcessingParams {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct mesh_generationParams {
+    #[serde(default = "default_thresholds")]
+    pub thresholds: Vec<f64>,
+    #[serde(default)]
+    pub base_height: f64,
+    #[serde(default = "default_layer_thickness")]
+    pub layer_thickness: f64,
+}
+
+impl Default for mesh_generationParams {
+    fn default() -> Self {
+        Self {
+            thresholds: default_thresholds(),
+            base_height: 0.0,
+            layer_thickness: 1.0,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ContourParams {
+    pub min_polygon_area: f64,
+    pub simplify_tolerance: f64,
+    pub max_segments: usize,
+    pub min_area_fraction: f64,
+}
+
+impl Default for ContourParams {
+    fn default() -> Self {
+        Self {
+            min_polygon_area: 1e-2,
+            simplify_tolerance: 0.5,
+            max_segments: 100,
+            min_area_fraction: 0.01,
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ImageConfig {
     #[serde(default)]
     pub source: ImageSourceParams,
     #[serde(default)]
-    pub processing: ImageProcessingParams,
+    pub image_processing: ImageProcessingParams,
+    #[serde(default)]
+    pub mesh_generation: mesh_generationParams,
+    #[serde(default)]
+    pub contour_generation: ContourParams,
 }
 
 impl ImageConfig {
@@ -91,4 +134,12 @@ fn default_fill_iterations() -> usize {
 
 fn default_neighborhood() -> usize {
     1
+}
+
+fn default_thresholds() -> Vec<f64> {
+    vec![10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0]
+}
+
+fn default_layer_thickness() -> f64 {
+    1.0
 }

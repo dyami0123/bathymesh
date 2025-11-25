@@ -1,13 +1,13 @@
 use anyhow::Result;
 use image::GenericImageView;
 use rust_implementation::config::ImageConfig;
+use rust_implementation::core::{ContourExtractor, MeshCombiner, MeshGenerator};
 use rust_implementation::image_processor::ImageProcessor;
-use rust_implementation::core::{ContourExtractor, ContourParams, Triangulator, MeshCombiner};
-use rust_implementation::viz::{MeshVisualizer, ContourVisualizer};
+use rust_implementation::viz::{ContourVisualizer, HeightmapVisualizer, MeshVisualizer};
 
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
-    
+
     if args.len() < 3 {
         eprintln!("Usage: {} <image> <config>", args[0]);
         std::process::exit(1);
@@ -16,7 +16,7 @@ fn main() -> Result<()> {
     let image_path = &args[1];
     let config_path = &args[2];
 
-    println!("Bathymesh Mesh Generation Test");
+    println!("Bathymesh Mesh mesh_generation Test");
     println!("--------------------------------");
 
     // Load config
@@ -34,46 +34,53 @@ fn main() -> Result<()> {
     )?;
 
     // Process image
-    let heightmap = processor.process_image_to_heightmap(&image, &config.processing)?;
+    let heightmap = processor.process_image_to_heightmap(&image, &config.image_processing)?;
     let (width, height) = image.dimensions();
 
     println!("Processed heightmap: {}x{}", width, height);
 
     // Extract contours at multiple thresholds
-    let thresholds = vec![10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0];
-    let contour_params = ContourParams {
-        min_polygon_area: 100.0,
-        simplify_tolerance: 2.0,
-        max_segments: 3000,
-        min_area_fraction: 0.01,
-    };
-    
-    let extractor = ContourExtractor::new(contour_params);
+    let thresholds = &config.mesh_generation.thresholds;
+
+    let extractor = ContourExtractor::new(config.contour_generation);
     let snapshots = extractor.extract_multi_threshold(
         &heightmap,
         width as usize,
         height as usize,
-        &thresholds,
+        thresholds,
     )?;
 
     println!("Extracted contours at {} threshold levels", snapshots.len());
 
-    // Triangulate each layer
-    let triangulator = Triangulator::new();
+    // Generate extruded meshes for each layer
+    let mesh_generator = MeshGenerator::new(config.mesh_generation.clone());
     let mut layers = Vec::new();
 
-    for snapshot in &snapshots {
-        let meshes = triangulator.triangulate_layer(&snapshot.contours, snapshot.threshold)?;
-        println!("Layer at {:.0}: {} meshes with {} total triangles",
-                 snapshot.threshold,
-                 meshes.len(),
-                 meshes.iter().map(|m| m.triangle_count()).sum::<usize>());
+    for (i, snapshot) in snapshots.iter().enumerate() {
+        let level_height = config.mesh_generation.base_height
+            + (i as f64 * config.mesh_generation.layer_thickness);
+
+        println!(
+            "Generating layer {} at threshold {:.0}, height {:.1}",
+            i, snapshot.threshold, level_height
+        );
+
+        let meshes =
+            mesh_generator.generate_extruded_mesh(&snapshot.contours, Some(level_height))?;
+
+        println!(
+            "  Generated {} meshes with {} total triangles",
+            meshes.len(),
+            meshes.iter().map(|m| m.triangle_count()).sum::<usize>()
+        );
+
         layers.push((snapshot.threshold, meshes));
     }
 
     // Combine all layers into a single mesh
     let combiner = MeshCombiner::new();
-    let combined_mesh = combiner.combine_layers(&layers.iter().map(|(_, m)| m.clone()).collect::<Vec<_>>());
+    let combined_mesh =
+        combiner.combine_layers(&layers.iter().map(|(_, m)| m.clone()).collect::<Vec<_>>());
 
     println!("\nCombined mesh statistics:");
     println!("  Vertices: {}", combined_mesh.vertex_count());
@@ -84,18 +91,13 @@ fn main() -> Result<()> {
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_secs();
-    
+
     let app_name = format!("Bathymesh Complete View {}", timestamp);
 
     // Visualize the heightmap first (as a reference layer)
     println!("\nVisualizing heightmap...");
-    let heightmap_viz = rust_implementation::viz::HeightmapVisualizer::new();
-    heightmap_viz.visualize_heightmap(
-        &heightmap,
-        width as usize,
-        height as usize,
-        &app_name,
-    )?;
+    let heightmap_viz = HeightmapVisualizer::new();
+    heightmap_viz.visualize_heightmap(&heightmap, width as usize, height as usize, &app_name)?;
 
     // Visualize contours in the same recording
     println!("Visualizing contours...");
