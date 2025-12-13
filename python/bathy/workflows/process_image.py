@@ -14,7 +14,7 @@ def process_image(
     preserve_full_resolution: bool = True,
     max_dimension: Optional[int] = None,
     default_fuzziness: float = 10.0,
-    region: Optional[Tuple[int, int, int, int]] = None,
+    region: Optional[Tuple[float, float, float, float]] = None,
     fill_nan_values: bool = False,
     fill_max_iterations: int = 100,
     fill_neighborhood_size: int = 1,

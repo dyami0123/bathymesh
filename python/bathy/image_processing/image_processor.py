@@ -81,7 +81,7 @@ class ImageProcessor:
         image: np.ndarray,
         color_map: Dict[str, Union[float, Dict]],
         default_fuzziness: float = 10.0,
-        region: Optional[Tuple[int, int, int, int]] = None,
+        region: Optional[Tuple[float, float, float, float]] = None,
         fill_nan_values: bool = False,
         fill_max_iterations: int = 100,
         fill_neighborhood_size: int = 1,
@@ -107,17 +107,36 @@ class ImageProcessor:
             )
 
         # Extract region if specified
-        if region is not None:
-            x_start, y_start, x_end, y_end = region
-            image = image[y_start:y_end, x_start:x_end]
-            self.logger.info(
-                f"Processing sub-region: ({x_start}, {y_start}) to ({x_end}, {y_end})"
-            )
-
+        
+        
         height, width = image.shape[:2]
         self.logger.info(
             f"Processing image of size {width}x{height} with {len(color_map)} color mappings"
         )
+        
+        if region is not None:
+            x_start, y_start, x_end, y_end = region
+            if any([(x > 1) | (x < 0) for x in region]):
+                raise ValueError("Invalid Region Specified")
+            
+            y_start_int = int(y_start * height)
+            y_end_int = int(y_end * height)
+            
+            x_start_int = int(x_start * width)
+            x_end_int = int(x_end * width)
+            
+            image = image[y_start_int:y_end_int, x_start_int:x_end_int]
+            self.logger.info(
+                f"Processing sub-region: ({x_start}, {y_start}) to ({x_end}, {y_end})"
+            )
+            self.logger.info(
+                f"Sub-region pixel coordinates: ({x_start_int}, {y_start_int}) to ({x_end_int}, {y_end_int})"
+            )
+            
+            self.logger.info(
+                f"Sub-region size: {image.shape[1]}x{image.shape[0]} pixels"
+            )
+
 
         # Initialize color mapper
         mapper = ColorMapper(color_map, default_fuzziness)

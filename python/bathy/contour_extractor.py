@@ -196,14 +196,38 @@ class ContourExtractor:
             if len(poly.interiors) > 0:
                 # Calculate total hole area
                 hole_area = sum(Polygon(interior).area for interior in poly.interiors)
-                total_area = poly.area
+                total_area = Polygon(poly.exterior).area
 
+                # If hole area > total area, classification is inverted
+                if hole_area > total_area:
+                    logger.warning(
+                        f"Hole area {hole_area:.2f} > total area {total_area:.2f}, inverting classification"
+                    )
+                    # The largest interior should become the exterior
+                    # The old exterior becomes a hole in the new polygon
+                    interior_polys = [Polygon(interior) for interior in poly.interiors]
+                    largest_interior = max(interior_polys, key=lambda p: p.area)
+                    
+                    # Create new polygon with largest interior as exterior
+                    # and old exterior as a hole (along with other interiors)
+                    other_holes = [
+                        list(interior.exterior.coords) 
+                        for interior in interior_polys 
+                        if interior != largest_interior
+                    ]
+                    other_holes.append(list(poly.exterior.coords))
+                    
+                    inverted_poly = Polygon(
+                        largest_interior.exterior.coords,
+                        holes=other_holes
+                    )
+                    cleaned_polygons.append(inverted_poly)
                 # If holes take up 95% or more, create polygon without holes
-                if hole_area >= 0.95 * total_area:
+                elif hole_area >= 0.60 * total_area:
                     cleaned_poly = Polygon(poly.exterior.coords)
                     cleaned_polygons.append(cleaned_poly)
                     logger.warning(
-                        f"Removed interiors from polygon (hole area {hole_area:.2f} >= 95% of {total_area:.2f})"
+                        f"Removed interiors from polygon (hole area {hole_area:.2f} >= 60% of {total_area:.2f})"
                     )
                 else:
                     cleaned_polygons.append(poly)
