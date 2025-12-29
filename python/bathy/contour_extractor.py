@@ -6,6 +6,7 @@ from typing import List, Union
 
 import cv2
 import numpy as np
+from bathy.config import MeshGenerationConfig
 from shapely.geometry import Polygon
 from shapely.ops import unary_union
 from skimage import measure
@@ -21,6 +22,16 @@ class ContourExtractor:
     simplify_tolerance: float = 0.5
     max_segments: int = 100
     min_area_fraction: float = 0.01
+
+    @classmethod
+    def from_config(cls, config: MeshGenerationConfig) -> "ContourExtractor":
+        """Create ContourExtractor from configuration."""
+        return ContourExtractor(
+            min_polygon_area=config.contour_extraction.min_polygon_area,
+            simplify_tolerance=config.contour_extraction.simplify_tolerance,
+            max_segments=config.contour_extraction.max_segments,
+            min_area_fraction=config.contour_extraction.min_area_fraction,
+        )
 
     def extract_contour_polygons(
         self,
@@ -207,19 +218,18 @@ class ContourExtractor:
                     # The old exterior becomes a hole in the new polygon
                     interior_polys = [Polygon(interior) for interior in poly.interiors]
                     largest_interior = max(interior_polys, key=lambda p: p.area)
-                    
+
                     # Create new polygon with largest interior as exterior
                     # and old exterior as a hole (along with other interiors)
                     other_holes = [
-                        list(interior.exterior.coords) 
-                        for interior in interior_polys 
+                        list(interior.exterior.coords)
+                        for interior in interior_polys
                         if interior != largest_interior
                     ]
                     other_holes.append(list(poly.exterior.coords))
-                    
+
                     inverted_poly = Polygon(
-                        largest_interior.exterior.coords,
-                        holes=other_holes
+                        largest_interior.exterior.coords, holes=other_holes
                     )
                     cleaned_polygons.append(inverted_poly)
                 # If holes take up 95% or more, create polygon without holes

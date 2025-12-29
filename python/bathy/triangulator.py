@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import List, Tuple, Union
 
 import numpy as np
+from bathy.config import MeshGenerationConfig
 from scipy.spatial import Delaunay
 from shapely.geometry import MultiPolygon, Point, Polygon
 
@@ -23,6 +24,14 @@ class Triangulator:
 
     add_interior_points: bool = True
     interior_point_density: float = 1.0
+
+    @classmethod
+    def from_config(cls, config: MeshGenerationConfig) -> "Triangulator":
+        """Create Triangulator from configuration."""
+        return Triangulator(
+            add_interior_points=config.triangulation.triangulator_add_interior_points,
+            interior_point_density=config.triangulation.triangulator_interior_point_density,
+        )
 
     def triangulate_polygon(
         self, geometries: Union[Polygon, MultiPolygon, List[Polygon]]
@@ -72,7 +81,7 @@ class Triangulator:
 
         if polygon.area == 0:
             raise ValueError("Input polygon has zero area")
-        
+
         # Extract boundary points
         boundary_points = self._extract_boundary_points(polygon)
 
@@ -145,7 +154,7 @@ class Triangulator:
         # Get polygon bounds
         minx, miny, maxx, maxy = polygon.bounds
         area = polygon.area
-        
+
         if area == 0:
             logger.warning("Polygon has zero area; no interior points generated")
             return np.empty((0, 2))

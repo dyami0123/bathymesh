@@ -1,12 +1,18 @@
 import logging
 from pathlib import Path
 
-import geopandas as gpd
 import numpy as np
-from bathy.data_model import HeightmapData, MeshUnits
-from bathy.mesh_post_processor import SimplificationMethod
+from bathy.config import (
+    ContourExtractionConfig,
+    HeighmapProcessingConfig,
+    MeshCombinationConfig,
+    MeshGenerationConfig,
+    MeshUnits,
+    PostProcessingConfig,
+    TriangulationConfig,
+)
 from bathy.workflows.generate_mesh import generate_mesh
-from matplotlib import pyplot as plt
+from bathy.viz.contours import contour_plot
 
 if __name__ == "__main__":
     # Configure logging
@@ -27,9 +33,8 @@ if __name__ == "__main__":
     exterior_buffer_width = 200
     exterior_buffer_value = -500
     offset = np.nanmin(raw_heightmap_data) * -1.1
-    
+
     max_val = np.nanmax(raw_heightmap_data)
-    
 
     # Mesh parameters
     units = MeshUnits(
@@ -38,92 +43,65 @@ if __name__ == "__main__":
         units_z=1,  # Z-axis (height) scaling factor
     )
 
-
     thresholds = [
-        x for x in np.linspace(
-        exterior_buffer_value*0.9, 
-        (offset + max_val), 
-        180
+        x
+        for x in np.linspace(
+            exterior_buffer_value * 0.9,
+            (offset + max_val),
+            180,
         )
-        ]  # Height thresholds
-    # thresholds = [x for x in np.linspace(0, 199, 3)]  # Height thresholds
-
-    layer_spacing = 1  # Vertical spacing between levels
+    ]  # Height thresholds
 
     base_height = 0.0  # Base height for mesh
     thickness = 1  # Thickness for extruded meshes
 
     create_visuals: bool = True
 
-    heightmap_data = HeightmapData(
-        data=raw_heightmap_data,
-        exterior_buffer_width=exterior_buffer_width,
-        exterior_buffer_value=exterior_buffer_value,
-        units=units,
-        data_offset=offset,
-    )
-
-    heightmap_data.post_process()
-
-    generated_mesh, generator = generate_mesh(
-        heightmap_data=heightmap_data,
-        thresholds=thresholds,
-        save_path=save_mesh_path,
-        base_height=base_height,
-        layer_thickness=thickness,
-        post_process_mesh=True,
-        # Contour extraction
-        contour_extraction_min_polygon_area=1e-3,
-        contour_extraction_simplify_tolerance=0.5,
-        contour_extraction_max_segments=10000,
-        contour_extraction_min_area_fraction=0.0001,
-        # Combiner
-        combiner_merge_threshold=1e-6,
-        # Triangulator
-        triangulator_add_interior_points=True,
-        triangulator_interior_point_density=1.0,
-        # Post-processing: Basic cleanup
-        post_p_remove_degenerate_triangles=True,
-        post_p_remove_duplicated_vertices=True,
-        post_p_remove_duplicated_triangles=True,
-        post_p_remove_unreferenced_vertices=True,
-        # Post-processing: Vertex merging
-        post_p_merge_close_vertices=True,
-        post_p_merge_vertices_threshold=1e-6,
-        # Post-processing: Simplification
-        post_p_simplification_method=SimplificationMethod.NONE,
-        post_p_target_triangle_count=100000,
-        post_p_voxel_size=0.05,
+    config = MeshGenerationConfig(
+        heightmap_processing=HeighmapProcessingConfig(
+            exterior_buffer_value=exterior_buffer_value,
+            exterior_buffer_width=exterior_buffer_width,
+            data_offset=offset,
+            mesh_units=units,
+            base_height=base_height,
+            layer_thickness=thickness,
+            thresholds=thresholds,
+        ),
+        contour_extraction=ContourExtractionConfig(
+            min_polygon_area=1e-3,
+            simplify_tolerance=0.5,
+            max_segments=10000,
+            min_area_fraction=0.0001,
+        ),
+        mesh_combination=MeshCombinationConfig(
+            merge_threshold=1e-6,
+        ),
+        triangulation=TriangulationConfig(
+            triangulator_add_interior_points=True,
+            triangulator_interior_point_density=1.0,
+        ),
+        post_processing=PostProcessingConfig(
+            apply_post_processing=True,
+            remove_degenerate_triangles=True,
+            remove_duplicated_vertices=True,
+            remove_duplicated_triangles=True,
+            remove_unreferenced_vertices=True,
+            merge_close_vertices=True,
+            merge_vertices_threshold=1e-6,
+            simplification_method="none",
+            target_triangle_count=100000,
+            voxel_size=0.05,
+        ),
         stateless=not create_visuals,
     )
 
+    heightmap_data, generator = generate_mesh(
+        filepath=heightmap_path,
+        config=config,
+        save_path=save_mesh_path,
+    )
+
     if create_visuals:
-        # Plot Contours
-        fig, ax = plt.subplots(figsize=(10, 10))
-
-        max_idx = max(generator.threshold_snapshots.keys())
-        for idx, snap in generator.threshold_snapshots.items():
-            contours = snap.contours
-            gdf = gpd.GeoDataFrame(geometry=contours)
-            gdf["level"] = idx
-            gdf.plot(
-                ax=ax,
-                alpha=0.5,
-                edgecolor="black",
-                label=f"Threshold {idx}",
-                cmap="viridis",
-                vmin=0,
-                vmax=max_idx,
-                legend=True,
-            )
-
-        ax.set_title("Extracted Contours at Different Height Thresholds")
-
-        ax.set_xlabel("X Coordinate")
-        ax.set_ylabel("Y Coordinate")
-        ax.legend(title="Height Thresholds")
-        plt.grid(True)
-
         save_path = data_dir / "debug_outs" / "hawaii_contours.png"
         save_path.parent.mkdir(parents=True, exist_ok=True)
-        plt.savefig(save_path)
+        contour_plot(generator=generator, save_path=save_path)
