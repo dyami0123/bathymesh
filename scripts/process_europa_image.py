@@ -1,15 +1,9 @@
-#!/usr/bin/env python
-"""
-Example script demonstrating the ImageToHeightmapWorkflow class.
-
-This shows the recommended workflow-based approach for converting images to heightmaps.
-"""
-
 import logging
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 from bathy.workflows.process_image import process_image
+from bathy.config import ImageProcessingConfig
+from bathy.viz.heightmap import heightmap_plot
 
 if __name__ == "__main__":
     # Configure logging
@@ -36,23 +30,25 @@ if __name__ == "__main__":
 
     # invert order to have lowest colors first
     color_map = dict(reversed(list(color_map.items())))
-
-    result = process_image(
-        image_path=image_path,
-        color_map=color_map,
-        save_path=save_path,
+    
+    config = ImageProcessingConfig(
         preserve_full_resolution=True,
-        default_fuzziness=30.0,
+        max_dimension=None,
+        region=None,
         fill_nan_values=True,
-        fill_max_iterations=50,
-        fill_neighborhood_size=1,
+        fill_max_iterations=100,
+        fill_neighborhood=1,
+        color_map=color_map,
+        default_fuzziness=fuzz,
     )
-
-    plt.figure(figsize=(10, 8))
-    plt.imshow(result.data, cmap="viridis", interpolation="nearest")
-    plt.colorbar(label="Height")
-    plt.title("Generated Heightmap")
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    plt.tight_layout()
-    plt.savefig(data_dir / "processed" / "europa.png")
+    
+    heightmap_data = process_image(
+        image_path=image_path,
+        config=config,
+        save_path=save_path,
+    )
+    
+    heightmap_plot(
+        data=heightmap_data,
+        save_path=data_dir / "processed" / "europa.png",
+    )

@@ -5,16 +5,9 @@ from dataclasses import dataclass
 from enum import Enum
 
 import open3d as o3d
+from bathy.config import MeshGenerationConfig
 
 logger = logging.getLogger(__name__)
-
-
-class SimplificationMethod(Enum):
-    """Available mesh simplification methods."""
-
-    NONE = "none"
-    VERTEX_CLUSTERING = "vertex_clustering"
-    QUADRIC_DECIMATION = "quadric_decimation"
 
 
 @dataclass
@@ -38,9 +31,24 @@ class MeshPostProcessor:
     merge_vertices_threshold: float = 1e-6
 
     # Simplification
-    simplification_method: SimplificationMethod = SimplificationMethod.NONE
+    # simplification_method: SimplificationMethod = SimplificationMethod.NONE
     target_triangle_count: int = 100000  # For quadric decimation
     voxel_size: float = 0.05  # For vertex clustering
+
+    @classmethod
+    def from_config(cls, config: MeshGenerationConfig) -> "MeshPostProcessor":
+        """Create MeshPostProcessor from configuration."""
+        return MeshPostProcessor(
+            remove_degenerate_triangles=config.post_processing.remove_degenerate_triangles,
+            remove_duplicated_vertices=config.post_processing.remove_duplicated_vertices,
+            remove_duplicated_triangles=config.post_processing.remove_duplicated_triangles,
+            remove_unreferenced_vertices=config.post_processing.remove_unreferenced_vertices,
+            merge_close_vertices=config.post_processing.merge_close_vertices,
+            merge_vertices_threshold=config.post_processing.merge_vertices_threshold,
+            # simplification_method=SimplificationMethod(config.post_processing.simplification_method),
+            target_triangle_count=config.post_processing.target_triangle_count,
+            voxel_size=config.post_processing.voxel_size,
+        )
 
     def process_mesh(
         self, mesh: o3d.geometry.TriangleMesh
@@ -69,7 +77,7 @@ class MeshPostProcessor:
         mesh = self._cleanup_mesh(mesh)
 
         # Simplification
-        mesh = self._simplify_mesh(mesh)
+        # mesh = self._simplify_mesh(mesh)
 
         # Final stats
         final_vertices = len(mesh.vertices)
@@ -113,38 +121,38 @@ class MeshPostProcessor:
 
         return mesh
 
-    def _simplify_mesh(
-        self, mesh: o3d.geometry.TriangleMesh
-    ) -> o3d.geometry.TriangleMesh:
-        """Apply simplification to mesh based on configured method."""
+    # def _simplify_mesh(
+    #     self, mesh: o3d.geometry.TriangleMesh
+    # ) -> o3d.geometry.TriangleMesh:
+    #     """Apply simplification to mesh based on configured method."""
 
-        if self.simplification_method == SimplificationMethod.NONE:
-            return mesh
+    #     if self.simplification_method == SimplificationMethod.NONE:
+    #         return mesh
 
-        initial_triangles = len(mesh.triangles)
+    #     initial_triangles = len(mesh.triangles)
 
-        if self.simplification_method == SimplificationMethod.VERTEX_CLUSTERING:
-            mesh = mesh.simplify_vertex_clustering(
-                voxel_size=self.voxel_size,
-                contraction=o3d.geometry.SimplificationContraction.Average,
-            )
-            final_triangles = len(mesh.triangles)
-            logger.debug(
-                f"Vertex clustering simplification: {initial_triangles:,} → "
-                f"{final_triangles:,} triangles (voxel_size={self.voxel_size})"
-            )
+    #     if self.simplification_method == SimplificationMethod.VERTEX_CLUSTERING:
+    #         mesh = mesh.simplify_vertex_clustering(
+    #             voxel_size=self.voxel_size,
+    #             contraction=o3d.geometry.SimplificationContraction.Average,
+    #         )
+    #         final_triangles = len(mesh.triangles)
+    #         logger.debug(
+    #             f"Vertex clustering simplification: {initial_triangles:,} → "
+    #             f"{final_triangles:,} triangles (voxel_size={self.voxel_size})"
+    #         )
 
-        elif self.simplification_method == SimplificationMethod.QUADRIC_DECIMATION:
-            mesh = mesh.simplify_quadric_decimation(
-                target_number_of_triangles=self.target_triangle_count
-            )
-            final_triangles = len(mesh.triangles)
-            logger.debug(
-                f"Quadric decimation simplification: {initial_triangles:,} → "
-                f"{final_triangles:,} triangles (target={self.target_triangle_count:,})"
-            )
+    #     elif self.simplification_method == SimplificationMethod.QUADRIC_DECIMATION:
+    #         mesh = mesh.simplify_quadric_decimation(
+    #             target_number_of_triangles=self.target_triangle_count
+    #         )
+    #         final_triangles = len(mesh.triangles)
+    #         logger.debug(
+    #             f"Quadric decimation simplification: {initial_triangles:,} → "
+    #             f"{final_triangles:,} triangles (target={self.target_triangle_count:,})"
+    #         )
 
-        return mesh
+    #     return mesh
 
     @staticmethod
     def quick_cleanup(
@@ -167,28 +175,28 @@ class MeshPostProcessor:
 
         return processor.process_mesh(mesh)
 
-    @staticmethod
-    def simplify(
-        mesh: o3d.geometry.TriangleMesh,
-        method: SimplificationMethod = SimplificationMethod.QUADRIC_DECIMATION,
-        target_triangles: int = 100000,
-        voxel_size: float = 0.05,
-    ) -> o3d.geometry.TriangleMesh:
-        """
-        Simplify mesh with specified method.
+    # @staticmethod
+    # def simplify(
+    #     mesh: o3d.geometry.TriangleMesh,
+    #     method: SimplificationMethod = SimplificationMethod.QUADRIC_DECIMATION,
+    #     target_triangles: int = 100000,
+    #     voxel_size: float = 0.05,
+    # ) -> o3d.geometry.TriangleMesh:
+    #     """
+    #     Simplify mesh with specified method.
 
-        Args:
-            mesh: Mesh to simplify
-            method: Simplification method to use
-            target_triangles: Target triangle count (for quadric decimation)
-            voxel_size: Voxel size (for vertex clustering)
+    #     Args:
+    #         mesh: Mesh to simplify
+    #         method: Simplification method to use
+    #         target_triangles: Target triangle count (for quadric decimation)
+    #         voxel_size: Voxel size (for vertex clustering)
 
-        Returns:
-            Simplified mesh
-        """
-        processor = MeshPostProcessor(
-            simplification_method=method,
-            target_triangle_count=target_triangles,
-            voxel_size=voxel_size,
-        )
-        return processor.process_mesh(mesh)
+    #     Returns:
+    #         Simplified mesh
+    #     """
+    #     processor = MeshPostProcessor(
+    #         simplification_method=method,
+    #         target_triangle_count=target_triangles,
+    #         voxel_size=voxel_size,
+    #     )
+    #     return processor.process_mesh(mesh)

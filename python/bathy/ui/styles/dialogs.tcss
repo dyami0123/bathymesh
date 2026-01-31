@@ -1,0 +1,129 @@
+/* Modal/Dialog Styles - Terminal Theme Aware */
+
+/* =========================================
+   EditValueDialog
+   ========================================= */
+EditValueDialog {
+    align: center middle;
+}
+
+EditValueDialog > Container {
+    width: 70;
+    height: auto;
+    border: thick $panel;
+    background: $surface;
+    padding: 2;
+}
+
+EditValueDialog #value-input {
+    width: 100%;
+    margin: 1 0;
+}
+
+EditValueDialog #button-container {
+    width: auto;
+    height: auto;
+    align: center middle;
+    margin-top: 1;
+}
+
+EditValueDialog Button {
+    margin: 0 1;
+}
+
+EditValueDialog #help-text {
+    color: $text-muted;
+    text-align: center;
+    width: 100%;
+    margin: 0;
+}
+
+EditValueDialog #description {
+    color: $text;
+    text-align: left;
+    width: 100%;
+    margin: 1 0;
+}
+
+EditValueDialog #shortcuts-text {
+    color: $text-muted;
+    text-align: center;
+    width: 100%;
+    margin: 0 0 1 0;
+}
+
+/* =========================================
+   NewProjectDialog
+   ========================================= */
+NewProjectDialog {
+    align: center middle;
+}
+
+NewProjectDialog > Container {
+    width: 60;
+    height: 45;
+    border: thick $panel;
+    background: $surface;
+    padding: 2;
+}
+
+NewProjectDialog #name-input {
+    width: 100%;
+    margin: 1 0;
+}
+
+NewProjectDialog #description-area {
+    height: 8;
+    width: 100%;
+    margin: 1 0;
+}
+
+NewProjectDialog #button-container {
+    width: auto;
+    height: 5;
+    align: center middle;
+}
+
+NewProjectDialog Button {
+    height: 2;
+    width: auto;
+    margin: 0 1;
+}
+
+NewProjectDialog #error-label {
+    color: $error;
+    text-align: center;
+    width: 100%;
+    margin: 1 0;
+}
+
+/* =========================================
+   ProcessingModal
+   ========================================= */
+ProcessingModal {
+    align: center middle;
+}
+
+ProcessingModal > Container {
+    width: 80;
+    height: 30;
+    border: thick $panel;
+    background: $surface;
+}
+
+ProcessingModal #log-viewer {
+    height: 1fr;
+    border: solid $panel;
+    margin: 1;
+}
+
+ProcessingModal #status-label {
+    width: 100%;
+    text-align: center;
+    margin: 1;
+}
+
+ProcessingModal #close-button {
+    width: 100%;
+    margin: 1;
+}

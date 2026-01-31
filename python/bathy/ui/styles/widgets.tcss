@@ -1,0 +1,262 @@
+/* Widget Styles - Terminal Theme Aware */
+
+/* =========================================
+   ColorMapWidget
+   ========================================= */
+ColorMapWidget {
+    height: auto;
+    border: solid $panel;
+    padding: 1;
+}
+
+ColorMapWidget #color-table {
+    height: auto;
+    margin: 1;
+}
+
+ColorMapWidget .button-bar {
+    height: 2;
+    padding: 1;
+}
+
+ColorMapWidget .action-button {
+    margin-right: 1;
+}
+
+ColorMapWidget #confirm-add-button {
+    height: 1;
+    border: none;
+}
+ColorMapWidget #cancel-add-button {
+    height: 1;
+    border: none;
+}
+
+
+ColorMapWidget #add-form {
+    height: 10;
+    border: solid $panel;
+    padding: 1;
+    margin: 1;
+}
+
+ColorMapWidget Input {
+    width: 15;
+    height: 1;
+    border: none;
+}
+    
+ColorMapWidget Input:focus {
+    border: none;
+    }
+
+/* =========================================
+   ImageWorkflowWidget
+   ========================================= */
+ImageWorkflowWidget {
+    height: auto;
+}
+
+ImageWorkflowWidget .section {
+    margin: 1;
+    height: auto;
+    border: solid $panel;
+    padding: 1;
+}
+
+ImageWorkflowWidget #file-input {
+    width: 1fr;
+    margin: 1;
+}
+
+ImageWorkflowWidget #use-source-button {
+    width: 20;
+    margin: 1;
+}
+
+ImageWorkflowWidget #file-info-container {
+    margin: 1;
+    padding: 1;
+    border: solid $panel;
+}
+
+ImageWorkflowWidget #config-table {
+    height: auto;
+    margin: 1;
+}
+
+ImageWorkflowWidget .button-bar {
+    height: auto;
+    padding: 1;
+}
+
+ImageWorkflowWidget .action-button {
+    margin-right: 2;
+}
+
+ImageWorkflowWidget #status-log {
+    height: 10;
+    border: solid $panel;
+    margin: 1;
+}
+
+/* =========================================
+   MeshWorkflowWidget
+   ========================================= */
+MeshWorkflowWidget {
+    height: auto;
+}
+
+MeshWorkflowWidget .section {
+    margin: 1;
+    height: auto;
+    border: solid $panel;
+    padding: 1;
+}
+
+MeshWorkflowWidget #file-input {
+    width: 1fr;
+    margin: 1;
+}
+
+MeshWorkflowWidget #use-heightmap-button {
+    width: 100%;
+    margin: 1;
+}
+
+MeshWorkflowWidget #file-info-container {
+    margin: 1;
+    padding: 1;
+    border: solid $panel;
+}
+
+MeshWorkflowWidget #config-table {
+    height: 20;
+    margin: 1;
+}
+
+MeshWorkflowWidget .button-bar {
+    height: auto;
+    width: auto;
+    padding: 1;
+}
+
+MeshWorkflowWidget .action-button {
+    margin-right: 2;
+}
+
+MeshWorkflowWidget #status-log {
+    height: 10;
+    border: solid $panel;
+    margin: 1;
+}
+
+/* =========================================
+   OverviewWidget
+   ========================================= */
+OverviewWidget {
+    height: auto;
+}
+
+OverviewWidget .section {
+    margin: 1;
+    border: solid $panel;
+    padding: 1;
+    height: auto;
+}
+
+OverviewWidget .file-status-button {
+    width: 30;
+    margin-right: 1;
+}
+
+OverviewWidget #image-preview {
+    margin: 1 0;
+}
+
+OverviewWidget #info-log {
+    height: 1fr;
+    min-height: 15;
+    border: solid $panel;
+    margin: 1;
+}
+
+/* =========================================
+   ImagePreview Widgets (BaseImagePreview, SimpleImagePreview, InteractiveImagePreview)
+   ========================================= */
+BaseImagePreview, SimpleImagePreview, InteractiveImagePreview {
+    height: auto;
+    max-height: 60;
+}
+
+BaseImagePreview #preview-container,
+SimpleImagePreview #preview-container,
+InteractiveImagePreview #preview-container {
+    margin: 1;
+    border: solid $panel;
+    padding: 1;
+    height: auto;
+}
+
+BaseImagePreview #preview-hint,
+SimpleImagePreview #preview-hint,
+InteractiveImagePreview #preview-hint {
+    text-align: center;
+    padding: 0 0 1 0;
+    color: $text-muted;
+}
+
+BaseImagePreview #preview-placeholder,
+SimpleImagePreview #preview-placeholder,
+InteractiveImagePreview #preview-placeholder {
+    text-align: center;
+    padding: 2;
+    color: $text-muted;
+}
+
+BaseImagePreview #preview-image,
+SimpleImagePreview #preview-image,
+InteractiveImagePreview #preview-image {
+    border: none;
+    margin: 1 0;
+    height: auto;
+    max-height: 45;
+}
+
+BaseImagePreview #load-preview-button,
+SimpleImagePreview #load-preview-button,
+InteractiveImagePreview #load-preview-button {
+    width: 30;
+    margin: 1 0;
+}
+
+BaseImagePreview #preview-status,
+SimpleImagePreview #preview-status,
+InteractiveImagePreview #preview-status {
+    text-align: center;
+    padding: 0 0 1 0;
+    color: $text-muted;
+}
+
+/* InteractiveImagePreview specific elements */
+InteractiveImagePreview #preview-color-info {
+    text-align: center;
+    padding: 1;
+    background: $boost;
+    border: solid $accent;
+    margin: 1 0 0 0;
+    min-height: 1;
+}
+
+InteractiveImagePreview #preview-zoom-container {
+    margin: 1 0 0 0;
+    padding: 1;
+    border: solid $panel;
+    height: auto;
+}
+
+InteractiveImagePreview #preview-zoom-display {
+    text-align: center;
+    padding: 1;
+    min-height: 1;
+}

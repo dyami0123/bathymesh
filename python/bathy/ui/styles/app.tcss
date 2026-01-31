@@ -1,0 +1,141 @@
+/* Bathymesh TUI Styles - Terminal Theme Aware 
+   
+   This is the main stylesheet with global styles.
+   Component-specific styles are in screens.tcss, widgets.tcss, and dialogs.tcss
+   All are loaded via CSS_PATH list in app.py
+*/
+
+/* =========================================
+   Global Styles
+   ========================================= */
+
+/* Use terminal's background and foreground colors */
+Screen {
+    background: $background;
+    color: $text;
+}
+
+Header {
+    background: $panel;
+    color: $text;
+}
+
+Footer {
+    background: $panel;
+    color: $text;
+}
+
+/* =========================================
+   Common Widget Styles
+   ========================================= */
+
+Button {
+    min-width: 15;
+    background: $panel;
+    color: $text;
+}
+
+Button:hover {
+    background: $primary;
+    color: $text;
+}
+
+Button:focus {
+    border: solid $accent;
+}
+
+ListView {
+    background: $surface;
+    color: $text;
+}
+
+ListItem {
+    padding: 1;
+    color: $text;
+}
+
+ListItem:hover {
+    background: $boost;
+    color: $text;
+}
+
+ListItem > .list-item--highlight {
+    color: $text;
+}
+
+DataTable {
+    background: $surface;
+    color: $text;
+}
+
+DataTable > .datatable--cursor {
+    background: $boost;
+    color: $text;
+}
+
+DataTable > .datatable--header {
+    background: $panel;
+    color: $text;
+}
+
+Input {
+    background: $surface;
+    border: solid $panel;
+    color: $text;
+}
+
+Input:focus {
+    border: solid $accent;
+}
+
+TextArea {
+    background: $surface;
+    border: solid $panel;
+    color: $text;
+}
+
+TextArea:focus {
+    border: solid $accent;
+}
+
+RichLog {
+    background: $surface;
+    color: $text;
+}
+
+TabbedContent {
+    height: auto;
+}
+
+TabPane {
+    height: auto;
+}
+
+/* Container and label defaults */
+Container {
+    color: $text;
+}
+
+Label {
+    color: $text;
+}
+
+Static {
+    color: $text;
+}
+
+/* =========================================
+   Semantic Text Classes
+   ========================================= */
+
+/* Section headings - use primary color for emphasis */
+.section-heading {
+    color: $primary;
+    text-style: bold;
+}
+
+/* Alternative: Use accent color for headings */
+.heading-accent {
+    color: $accent;
+    text-style: bold;
+}

@@ -1,0 +1,86 @@
+stateless: true
+heightmap_processing:
+  exterior_buffer_width: 0
+  exterior_buffer_value: 0.0
+  data_offset: 0
+  mesh_units:
+    units_x: 1.0
+    units_y: 1.0
+    units_z: 1.0
+  thresholds:
+  - !!python/object/apply:numpy._core.multiarray.scalar
+    - &id001 !!python/object/apply:numpy.dtype
+      args:
+      - f8
+      - false
+      - true
+      state: !!python/tuple
+      - 3
+      - <
+      - null
+      - null
+      - null
+      - -1
+      - -1
+      - 0
+    - !!binary |
+      AAAAAAAAAAA=
+  - !!python/object/apply:numpy._core.multiarray.scalar
+    - *id001
+    - !!binary |
+      juM4juM4FkA=
+  - !!python/object/apply:numpy._core.multiarray.scalar
+    - *id001
+    - !!binary |
+      juM4juM4JkA=
+  - !!python/object/apply:numpy._core.multiarray.scalar
+    - *id001
+    - !!binary |
+      qqqqqqqqMEA=
+  - !!python/object/apply:numpy._core.multiarray.scalar
+    - *id001
+    - !!binary |
+      juM4juM4NkA=
+  - !!python/object/apply:numpy._core.multiarray.scalar
+    - *id001
+    - !!binary |
+      chzHcRzHO0A=
+  - !!python/object/apply:numpy._core.multiarray.scalar
+    - *id001
+    - !!binary |
+      qqqqqqqqQEA=
+  - !!python/object/apply:numpy._core.multiarray.scalar
+    - *id001
+    - !!binary |
+      HMdxHMdxQ0A=
+  - !!python/object/apply:numpy._core.multiarray.scalar
+    - *id001
+    - !!binary |
+      juM4juM4RkA=
+  - !!python/object/apply:numpy._core.multiarray.scalar
+    - *id001
+    - !!binary |
+      AAAAAAAASUA=
+  base_height: 0.0
+  layer_thickness: 0.5
+contour_extraction:
+  min_polygon_area: 0.01
+  simplify_tolerance: 0.5
+  max_segments: 100
+  min_area_fraction: 0.01
+mesh_combination:
+  merge_threshold: 1.0e-06
+triangulation:
+  triangulator_add_interior_points: true
+  triangulator_interior_point_density: 1.0
+post_processing:
+  apply_post_processing: true
+  remove_degenerate_triangles: true
+  remove_duplicated_vertices: true
+  remove_duplicated_triangles: true
+  remove_unreferenced_vertices: true
+  merge_close_vertices: false
+  merge_vertices_threshold: 1.0e-06
+  simplification_method: none
+  target_triangle_count: 100000
+  voxel_size: 0.05

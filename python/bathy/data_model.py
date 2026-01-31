@@ -1,8 +1,11 @@
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from typing import Optional
 
 import numpy as np
 import open3d as o3d
+from bathy.config import MeshGenerationConfig
+from shapely.geometry import Polygon
 
 logger = logging.getLogger(__name__)
 
@@ -17,39 +20,41 @@ class RawHeightmapData:
 
 
 @dataclass
-class MeshUnits:
-    """Scaling parameters for mesh generation."""
-
-    units_x: float = 1.0
-    units_y: float = 1.0
-    units_z: float = 1.0
-
-
-@dataclass
 class HeightmapData:
     data: np.ndarray
+    _post_processed: bool = False
 
-    exterior_buffer_width: int = 0
-    exterior_buffer_value: float = 0.0
-    units: MeshUnits = field(default_factory=MeshUnits)
-
-    data_offset: float = 0.0
-
-    def post_process(self) -> None:
+    def post_process(self, config: MeshGenerationConfig) -> None:
         """Apply scaling and offset to heightmap data."""
+
+        if self._post_processed:
+            logger.debug("Post-processing already applied, skipping")
+            return
+
         logger.debug("Post-processing heightmap data with scaling and offset")
 
-        self.data = (self.data * self.units.units_z) + self.data_offset
+        self.data = (
+            self.data * config.heightmap_processing.mesh_units.units_z
+        ) + config.heightmap_processing.data_offset
 
-        if self.exterior_buffer_width > 0:
+        if config.heightmap_processing.exterior_buffer_width > 0:
             self.data = np.pad(
                 self.data,
-                pad_width=self.exterior_buffer_width,
+                pad_width=config.heightmap_processing.exterior_buffer_width,
                 mode="constant",
-                constant_values=self.exterior_buffer_value,
+                constant_values=config.heightmap_processing.exterior_buffer_value,
             )
 
 
 @dataclass
 class MeshData:
     data: o3d.geometry.TriangleMesh
+
+
+@dataclass
+class ThresholdSnapshot:
+    threshold: float
+    mesh: Optional[o3d.geometry.TriangleMesh] = None
+    contours: Optional[list[Polygon]] = None
+    vertices_2d: Optional[list[np.ndarray]] = None
+    triangles: Optional[list[np.ndarray]] = None

@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import List
 
 import open3d as o3d
+from bathy.config import MeshGenerationConfig
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +15,13 @@ class MeshCombiner:
     """Combines and manipulates multiple meshes."""
 
     merge_threshold: float = 1e-6
+
+    @classmethod
+    def from_config(cls, config: MeshGenerationConfig) -> "MeshCombiner":
+        """Create MeshCombiner from configuration."""
+        return MeshCombiner(
+            merge_threshold=config.mesh_combination.merge_threshold,
+        )
 
     def combine_meshes(
         self, meshes: List[o3d.geometry.TriangleMesh]

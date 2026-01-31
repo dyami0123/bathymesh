@@ -162,6 +162,10 @@ cython_debug/
 # UV specific
 uv.lock
 
+# Pixi specific
+.pixi/
+pixi.lock
+
 # VS Code
 .vscode/
 *.code-workspace
@@ -179,3 +183,7 @@ Thumbs.db
 *.png
 *.npy
 *.xcf
+*.3mf
+*.zip
+*.nc
+/*/*/lmi_digital_elevation_model_epsg_3057/

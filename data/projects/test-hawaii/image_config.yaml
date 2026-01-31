@@ -1,0 +1,23 @@
+preserve_full_resolution: true
+max_dimension: null
+region: null
+fill_nan_values: true
+fill_max_iterations: 100
+fill_neighborhood: 1
+color_map:
+  '#0000FF':
+    value: -10.0
+    fuzziness: 5.0
+  '#00FFFF':
+    value: -5.0
+    fuzziness: 5.0
+  '#00FF00':
+    value: 0.0
+    fuzziness: 5.0
+  '#FFFF00':
+    value: 5.0
+    fuzziness: 5.0
+  '#FF0000':
+    value: 10.0
+    fuzziness: 5.0
+default_fuzziness: 10.0

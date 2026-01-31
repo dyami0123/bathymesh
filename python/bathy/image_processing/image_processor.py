@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from bathy.config import ImageProcessingConfig
 from bathy.image_processing.color_mapper import ColorMapper
 from PIL import Image
 from skimage.color import rgb2lab
@@ -22,15 +23,16 @@ class ImageProcessor:
     for maximum performance. Includes tqdm progress bars for long-running operations.
     """
 
-    def __init__(self):
+    config: ImageProcessingConfig
+
+    def __init__(self, config: ImageProcessingConfig):
         """Initialize the processor."""
         self.logger = logger
+        self.config = config
 
     def load_image(
         self,
         image_path: Union[str, Path],
-        preserve_full_resolution: bool = True,
-        max_dimension: Optional[int] = None,
     ) -> np.ndarray:
         """
         Load an image file and return as RGB array with full resolution control.
@@ -47,7 +49,7 @@ class ImageProcessor:
             desc=f"Loading image {Path(image_path).name}", total=1, unit="file"
         ) as pbar:
             # Prevent PIL from automatically limiting large images
-            if preserve_full_resolution:
+            if self.config.preserve_full_resolution:
                 # Remove PIL's default size limit
                 Image.MAX_IMAGE_PIXELS = None
 
@@ -58,10 +60,10 @@ class ImageProcessor:
                 )
 
                 # Resize if max_dimension is specified
-                if max_dimension is not None:
+                if self.config.max_dimension is not None:
                     current_max = max(img.size)
-                    if current_max > max_dimension:
-                        ratio = max_dimension / current_max
+                    if current_max > self.config.max_dimension:
+                        ratio = self.config.max_dimension / current_max
                         new_size = (int(img.size[0] * ratio), int(img.size[1] * ratio))
                         img = img.resize(new_size, Image.Resampling.LANCZOS)
                         self.logger.info(
@@ -79,12 +81,6 @@ class ImageProcessor:
     def process_image_to_heightmap(
         self,
         image: np.ndarray,
-        color_map: Dict[str, Union[float, Dict]],
-        default_fuzziness: float = 10.0,
-        region: Optional[Tuple[float, float, float, float]] = None,
-        fill_nan_values: bool = False,
-        fill_max_iterations: int = 100,
-        fill_neighborhood_size: int = 1,
     ) -> np.ndarray:
         """
         Process an image to create a heightmap based on color mapping.
@@ -107,24 +103,23 @@ class ImageProcessor:
             )
 
         # Extract region if specified
-        
-        
+
         height, width = image.shape[:2]
         self.logger.info(
-            f"Processing image of size {width}x{height} with {len(color_map)} color mappings"
+            f"Processing image of size {width}x{height} with {len(self.config.color_map)} color mappings"
         )
-        
-        if region is not None:
-            x_start, y_start, x_end, y_end = region
-            if any([(x > 1) | (x < 0) for x in region]):
+
+        if self.config.region is not None:
+            x_start, y_start, x_end, y_end = self.config.region
+            if any([(x > 1) | (x < 0) for x in self.config.region]):
                 raise ValueError("Invalid Region Specified")
-            
+
             y_start_int = int(y_start * height)
             y_end_int = int(y_end * height)
-            
+
             x_start_int = int(x_start * width)
             x_end_int = int(x_end * width)
-            
+
             image = image[y_start_int:y_end_int, x_start_int:x_end_int]
             self.logger.info(
                 f"Processing sub-region: ({x_start}, {y_start}) to ({x_end}, {y_end})"
@@ -132,24 +127,23 @@ class ImageProcessor:
             self.logger.info(
                 f"Sub-region pixel coordinates: ({x_start_int}, {y_start_int}) to ({x_end_int}, {y_end_int})"
             )
-            
+
             self.logger.info(
                 f"Sub-region size: {image.shape[1]}x{image.shape[0]} pixels"
             )
 
-
         # Initialize color mapper
-        mapper = ColorMapper(color_map, default_fuzziness)
+        mapper = ColorMapper(self.config.color_map, self.config.default_fuzziness)
 
         # Generate initial heightmap
         heightmap = self._process_vectorized_optimized(image, mapper)
 
         # Optionally fill NaN values
-        if fill_nan_values:
+        if self.config.fill_nan_values:
             heightmap = self.fill_nan_values(
                 heightmap,
-                max_iterations=fill_max_iterations,
-                neighborhood_size=fill_neighborhood_size,
+                max_iterations=self.config.fill_max_iterations,
+                neighborhood_size=self.config.fill_neighborhood,
             )
 
         return heightmap
