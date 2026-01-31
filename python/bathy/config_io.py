@@ -82,7 +82,9 @@ def config_to_dict(
                     "units_y": config.heightmap_processing.mesh_units.units_y,
                     "units_z": config.heightmap_processing.mesh_units.units_z,
                 },
-                "thresholds": list(config.heightmap_processing.thresholds),
+                "thresholds": [
+                    float(x) for x in config.heightmap_processing.thresholds
+                ],
                 "base_height": config.heightmap_processing.base_height,
                 "layer_thickness": config.heightmap_processing.layer_thickness,
             },
@@ -175,12 +177,16 @@ def dict_to_mesh_config(data: dict[str, Any]) -> MeshGenerationConfig:
             units_z=hp_data.get("mesh_units", {}).get("units_z", 1.0),
         )
 
+        # Ensure thresholds are converted to regular floats (not numpy scalars)
+        thresholds_raw = hp_data.get("thresholds", [x for x in range(0, 50, 10)])
+        thresholds = [float(x) for x in thresholds_raw]
+
         heightmap_processing = HeighmapProcessingConfig(
             exterior_buffer_width=hp_data.get("exterior_buffer_width", 0),
             exterior_buffer_value=hp_data.get("exterior_buffer_value", 0.0),
             data_offset=hp_data.get("data_offset", 0),
             mesh_units=mesh_units,
-            thresholds=hp_data.get("thresholds", [x for x in range(0, 50, 10)]),
+            thresholds=thresholds,
             base_height=hp_data.get("base_height", 0.0),
             layer_thickness=hp_data.get("layer_thickness", 0.5),
         )
@@ -275,6 +281,13 @@ def yaml_to_config(
             raise ConfigIOError(f"Invalid config type: {config_type}")
 
     except yaml.YAMLError as e:
+        error_msg = str(e)
+        if "numpy" in error_msg and "scalar" in error_msg:
+            raise ConfigIOError(
+                f"Config file contains numpy scalar objects that cannot be loaded. "
+                f"This may be from an older version. Please delete the config file "
+                f"and it will be recreated with correct format. Error: {e}"
+            )
         raise ConfigIOError(f"Failed to parse YAML: {e}")
 
 

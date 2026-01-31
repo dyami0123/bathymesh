@@ -28,13 +28,14 @@ dependencies = [
     "svgwrite>=1.4.3",
     "textual>=6.8.0",
     "textual-dev>=1.8.0",
+    "textual-image>=0.8.5",
     "tqdm>=4.66.0",
     "triangle>=20250106",
     "xarray>=2025.9.0",
 ]
 
 [project.scripts]
-bathy = "bathy.ui.app:main"
+bathy = "bathy.ui.app:mazin"
 
 [build-system]
 requires = ["hatchling"]

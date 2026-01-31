@@ -1,9 +1,24 @@
 name: test-europa
 created: '2026-01-19T20:35:07.456395'
-modified: '2026-01-19T20:35:07.475135'
+modified: '2026-01-20T08:15:12.065195'
 description: Test project for Europa ice shell data
-status: none
-source_image: null
-heightmap_file: null
+status: heightmap_generated
+source_image: source/palau-bathymetry-map.jpg
+heightmap_file: heightmap/test-europa_heightmap.npy
 latest_mesh: null
-workflow_history: []
+workflow_history:
+- timestamp: '2026-01-19T21:01:50.331866'
+  action: set_source_image
+  file: /home/dyami/Documents/git/bathymesh/data/raw/palau-bathymetry-map.jpg
+- timestamp: '2026-01-19T21:02:37.827694'
+  action: heightmap_generated
+  file: heightmap/test-europa_heightmap.npy
+- timestamp: '2026-01-19T21:05:08.896585'
+  action: heightmap_generated
+  file: heightmap/test-europa_heightmap.npy
+- timestamp: '2026-01-19T22:09:29.872597'
+  action: heightmap_generated
+  file: heightmap/test-europa_heightmap.npy
+- timestamp: '2026-01-20T08:15:12.058906'
+  action: heightmap_generated
+  file: heightmap/test-europa_heightmap.npy

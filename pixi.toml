@@ -30,6 +30,7 @@ uv = ">=0.1.0"
 git = "*"
 curl = "*"
 wget = "*"
+textual-image = ">=0.8.5,<0.9"
 
 [target.linux-64.dependencies]
 # System-level OpenGL and graphics libraries (Linux only)

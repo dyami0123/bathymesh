@@ -459,7 +459,7 @@ class ProjectManager:
             # Save metadata
             metadata_file = project_dir / "project.yaml"
             with open(metadata_file, "w") as f:
-                yaml.dump(
+                yaml.safe_dump(
                     metadata.to_dict(), f, default_flow_style=False, sort_keys=False
                 )
 
@@ -501,7 +501,9 @@ class ProjectManager:
             else:
                 raise ProjectError(f"Project not found: {name}")
 
-        return Project(project_dir)
+        proj = Project(project_dir)
+        logger.warning("Proj loaded")
+        return proj
 
     def delete_project(self, name: str, confirm: bool = False) -> None:
         """Delete a project and all its files.
