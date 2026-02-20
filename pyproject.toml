@@ -21,23 +21,28 @@ dependencies = [
     "pymeshlab>=2025.7",
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
+    "pyyaml>=6.0.3",
     "rich-pixels>=3.0.1",
     "scikit-image>=0.25.2",
     "shapely>=2.1.2",
     "svgwrite>=1.4.3",
     "textual>=6.8.0",
     "textual-dev>=1.8.0",
+    "textual-image>=0.8.5",
     "tqdm>=4.66.0",
     "triangle>=20250106",
     "xarray>=2025.9.0",
 ]
+
+[project.scripts]
+bathy = "bathy.ui.app:mazin"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["python/bathy"]
+packages = ["python/bathy", "python/bathymesh"]
 
 [tool.uv.workspace]
 members = [

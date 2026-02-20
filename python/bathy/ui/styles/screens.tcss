@@ -1,0 +1,57 @@
+/* Screen Styles - Terminal Theme Aware */
+
+/* =========================================
+   MainMenuScreen
+   ========================================= */
+MainMenuScreen {
+    align: center middle;
+}
+
+MainMenuScreen #menu-container {
+    width: 80;
+    height: auto;
+    background: $surface;
+    border: thick $panel;
+    padding: 2;
+}
+
+MainMenuScreen #title {
+    text-align: center;
+    margin: 1 0;
+}
+
+MainMenuScreen #projects-list {
+    height: 20;
+    margin: 2 0;
+    border: solid $panel;
+}
+
+MainMenuScreen #button-container {
+    height: auto;
+    align: center middle;
+}
+
+MainMenuScreen Button {
+    margin: 1;
+    min-width: 20;
+}
+
+/* =========================================
+   ProjectScreen
+   ========================================= */
+ProjectScreen {
+    height: 100%;
+}
+
+ProjectScreen #project-header {
+    height: auto;
+    width: 100%;
+    background: $panel;
+    padding: 1;
+    margin-bottom: 1;
+}
+
+ProjectScreen #back-button {
+    width: 20;
+    margin: 1;
+}

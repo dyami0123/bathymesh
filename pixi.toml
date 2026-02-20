@@ -1,0 +1,93 @@
+[workspace]
+name = "bathymesh"
+version = "0.1.0"
+description = "Bathymesh development environment with Python 3.12 and system dependencies"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-64", "osx-arm64"]
+
+[tasks]
+# Install Python dependencies with uv
+install = { cmd = "uv sync", cwd = "." }
+# Run tests
+test = "uv run pytest"
+test-unit = "uv run pytest -m unit"
+test-integration = "uv run pytest -m integration"
+test-coverage = "uv run pytest --cov=python/bathy --cov-report=html --cov-report=term-missing"
+# Run example scripts
+demo = "uv run scripts/demo_v0_1.py"
+hawaii = "uv run scripts/generate_hawaii_mesh.py"
+# TUI
+tui = "uv run python scripts/tui.py"
+# Development
+shell = "uv shell"
+
+[dependencies]
+# Python runtime
+python = "3.12.*"
+uv = ">=0.1.0"
+
+# Development tools
+git = "*"
+curl = "*"
+wget = "*"
+textual-image = ">=0.8.5,<0.9"
+
+[target.linux-64.dependencies]
+# System-level OpenGL and graphics libraries (Linux only)
+# These are needed for Open3D, gmsh, and pymeshlab
+mesa = "*"
+libgl = "*"
+libglu = "*"
+freeglut = "*"
+
+# X11 libraries for Linux GUI support
+xorg-libx11 = "*"
+xorg-libxext = "*"
+xorg-libxi = "*"
+xorg-libxrender = "*"
+xorg-libxfixes = "*"
+xorg-libxft = "*"
+xorg-libxcursor = "*"
+xorg-libxrandr = "*"
+xorg-libxinerama = "*"
+
+# Font and text rendering
+fontconfig = "*"
+
+# Core system libraries
+zlib = "*"
+libffi = "*"
+openssl = "*"
+zstd = "*"
+glib = "*"
+
+# C++ runtime libraries
+libstdcxx-ng = "*"
+libgcc-ng = "*"
+
+# Kerberos and authentication (required for PyMeshlab)
+krb5 = "*"
+libuuid = "*"
+keyutils = "*"
+
+# Device management
+libudev = "*"
+
+[target.osx-64.dependencies]
+# macOS-specific OpenGL (usually provided by system)
+zlib = "*"
+libffi = "*"
+openssl = "*"
+
+[target.osx-arm64.dependencies]
+# macOS ARM-specific OpenGL (usually provided by system)
+zlib = "*"
+libffi = "*"
+openssl = "*"
+
+[pypi-dependencies]
+# Python packages are managed by uv via pyproject.toml
+# This section intentionally left empty - use `uv add <package>` instead
+
+[activation]
+scripts = ["pixi-activation.sh"]

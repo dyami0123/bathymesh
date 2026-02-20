@@ -1,0 +1,9 @@
+name: test-hawaii
+created: '2026-01-19T20:35:07.429702'
+modified: '2026-01-19T20:35:07.452978'
+description: Test project for Hawaii bathymetry data
+status: none
+source_image: null
+heightmap_file: null
+latest_mesh: null
+workflow_history: []
