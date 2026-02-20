@@ -17,9 +17,11 @@ test-coverage = "uv run pytest --cov=python/bathy --cov-report=html --cov-report
 demo = "uv run scripts/demo_v0_1.py"
 hawaii = "uv run scripts/generate_hawaii_mesh.py"
 # TUI
-tui = "uv run python scripts/tui.py"
+tui = "uv run textual run scripts/tui.py --dev"
 # Development
 shell = "uv shell"
+
+textual-console = "uv run textual console -x SYSTEM -x EVENT"
 
 [dependencies]
 # Python runtime

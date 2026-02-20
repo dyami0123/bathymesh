@@ -39,6 +39,97 @@ class HeighmapProcessingConfig:
 
 
 @dataclass
+class SplitPlaneConfig:
+    """Configuration for a single split plane (DEPRECATED - use HeightmapSplittingConfig)."""
+
+    origin: tuple[float, float, float] = field(
+        default=(0.0, 0.0, 0.0),
+        metadata={"help": "A point on the split plane"},
+    )
+    normal: tuple[float, float, float] = field(
+        default=(1.0, 0.0, 0.0),
+        metadata={"help": "Normal vector of the split plane (will be normalized)"},
+    )
+
+
+@dataclass
+class MeshSplittingConfig:
+    """Configuration for mesh splitting (DEPRECATED - use HeightmapSplittingConfig).
+
+    This config is kept for backward compatibility but heightmap-based splitting
+    is now preferred as it produces cleaner meshes without triangle clipping issues.
+    """
+
+    enabled: bool = field(
+        default=False,
+        metadata={"help": "Whether to enable mesh splitting"},
+    )
+
+    # Explicit planes (takes precedence if non-empty)
+    planes: list[SplitPlaneConfig] = field(
+        default_factory=list,
+        metadata={"help": "Explicit split planes (origin + normal)"},
+    )
+
+    # Grid-based convenience (used if planes is empty)
+    grid_splits_x: list[float] = field(
+        default_factory=list,
+        metadata={"help": "X-axis split locations (absolute coordinates)"},
+    )
+    grid_splits_y: list[float] = field(
+        default_factory=list,
+        metadata={"help": "Y-axis split locations (absolute coordinates)"},
+    )
+    grid_splits_z: list[float] = field(
+        default_factory=list,
+        metadata={"help": "Z-axis split locations (absolute coordinates)"},
+    )
+
+    # Capping options
+    cap_cut_faces: bool = field(
+        default=True,
+        metadata={"help": "Add faces to close cut openings for watertight meshes"},
+    )
+
+
+@dataclass
+class HeightmapSplittingConfig:
+    """Configuration for heightmap-based tile splitting.
+
+    Splits the heightmap into tiles before mesh generation, producing
+    separate meshes for each tile. This approach is simpler and more robust
+    than splitting the mesh after generation.
+
+    Split locations are specified in output mesh coordinates (after scaling
+    by MeshUnits). For example, if the final mesh is 500mm wide and you want
+    to split it in half, use splits_x=[250.0].
+
+    The splitter uses absolute values of mesh units internally, so negative
+    scale factors (used for axis flipping) work correctly with positive
+    split locations.
+    """
+
+    enabled: bool = field(
+        default=False,
+        metadata={"help": "Whether to enable heightmap splitting into tiles"},
+    )
+
+    # Location-based splitting (in output mesh coordinates/units)
+    splits_x: list[float] = field(
+        default_factory=list,
+        metadata={
+            "help": "X-axis split locations in mesh units (e.g., [200.0, 400.0] creates 3 columns)"
+        },
+    )
+    splits_y: list[float] = field(
+        default_factory=list,
+        metadata={
+            "help": "Y-axis split locations in mesh units (e.g., [150.0] creates 2 rows)"
+        },
+    )
+
+
+@dataclass
 class MeshCombinationConfig:
     merge_threshold: float = field(
         default=1e-6,
@@ -68,7 +159,6 @@ class ContourExtractionConfig:
 
 @dataclass
 class TriangulationConfig:
-
     triangulator_add_interior_points: bool = field(
         default=True,
         metadata={"help": "Whether to add interior points during triangulation"},
@@ -125,7 +215,6 @@ class PostProcessingConfig:
 
 @dataclass
 class MeshGenerationConfig:
-
     stateless: bool = field(
         default=True,
         metadata={"help": "Whether to run in stateless mode (no visualizations)"},
@@ -146,11 +235,16 @@ class MeshGenerationConfig:
     post_processing: PostProcessingConfig = field(
         default_factory=PostProcessingConfig,
     )
+    mesh_splitting: MeshSplittingConfig = field(
+        default_factory=MeshSplittingConfig,
+    )
+    heightmap_splitting: HeightmapSplittingConfig = field(
+        default_factory=HeightmapSplittingConfig,
+    )
 
 
 @dataclass
 class ImageProcessingConfig:
-
     preserve_full_resolution: bool = field(
         default=True,
         metadata={"help": "Whether to preserve full image resolution"},
@@ -171,6 +265,11 @@ class ImageProcessingConfig:
     fill_nan_values: bool = field(
         default=True,
         metadata={"help": "Whether to fill NaN values in images"},
+    )
+
+    fill_nan_approach: str = field(
+        default="sorted",
+        metadata={"help": "Method to fill missing pixels, options: sorted, random"},
     )
 
     fill_max_iterations: int = field(

@@ -186,7 +186,6 @@ OverviewWidget #info-log {
    ========================================= */
 BaseImagePreview, SimpleImagePreview, InteractiveImagePreview {
     height: auto;
-    max-height: 60;
 }
 
 BaseImagePreview #preview-container,
@@ -214,13 +213,32 @@ InteractiveImagePreview #preview-placeholder {
     color: $text-muted;
 }
 
+
+BaseImagePreview #preview-horizontal,
+SimpleImagePreview #preview-horizontal,
+InteractiveImagePreview #preview-horizontal {
+    border: solid yellow;
+    height: auto;
+}
+
 BaseImagePreview #preview-image,
 SimpleImagePreview #preview-image,
 InteractiveImagePreview #preview-image {
     border: none;
     margin: 1 0;
+    height: 20;
+    width: auto;
+}
+
+/* Spacers to center the image horizontally and prevent empty-space clicks */
+BaseImagePreview #preview-spacer-left,
+SimpleImagePreview #preview-spacer-left,
+InteractiveImagePreview #preview-spacer-left,
+BaseImagePreview #preview-spacer-right,
+SimpleImagePreview #preview-spacer-right,
+InteractiveImagePreview #preview-spacer-right {
+    width: 1fr;
     height: auto;
-    max-height: 45;
 }
 
 BaseImagePreview #load-preview-button,
@@ -243,15 +261,16 @@ InteractiveImagePreview #preview-color-info {
     text-align: center;
     padding: 1;
     background: $boost;
-    border: solid $accent;
+    border: solid green;
     margin: 1 0 0 0;
-    min-height: 1;
+    min-height: 5;
+
 }
 
 InteractiveImagePreview #preview-zoom-container {
     margin: 1 0 0 0;
     padding: 1;
-    border: solid $panel;
+    border: solid red;
     height: auto;
 }
 
@@ -259,4 +278,6 @@ InteractiveImagePreview #preview-zoom-display {
     text-align: center;
     padding: 1;
     min-height: 1;
+    height: auto;
+    width: auto;
 }

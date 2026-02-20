@@ -1,25 +1,65 @@
 """Configuration and fixtures for pytest."""
+
 import pytest
 import numpy as np
 import tempfile
 import shutil
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator
 
-from bathymesh.utils import create_test_heightmap
-from bathymesh import MeshScaling
+
+@dataclass
+class MeshScaling:
+    """Mesh scaling parameters (for test compatibility)."""
+
+    scale_x: float = 1.0
+    scale_y: float = 1.0
+    scale_z: float = 1.0
+
+
+def create_test_heightmap(
+    width: int = 10,
+    height: int = 10,
+    feature_scale: float = 5.0,
+    noise_level: float = 0.05,
+) -> np.ndarray:
+    """Create a synthetic test heightmap with features.
+
+    Args:
+        width: Width of the heightmap
+        height: Height of the heightmap
+        feature_scale: Scale factor for feature heights
+        noise_level: Amount of random noise to add
+
+    Returns:
+        2D numpy array with synthetic heightmap data
+    """
+    x = np.linspace(0, 2 * np.pi, width)
+    y = np.linspace(0, 2 * np.pi, height)
+    X, Y = np.meshgrid(x, y)
+
+    # Create a heightmap with hills and valleys
+    heightmap = np.sin(X) * np.cos(Y) * feature_scale
+    heightmap += noise_level * np.random.randn(height, width)
+
+    return heightmap
 
 
 @pytest.fixture
 def test_heightmap() -> np.ndarray:
     """Create a small test heightmap for testing."""
-    return create_test_heightmap(width=10, height=10, feature_scale=5.0, noise_level=0.05)
+    return create_test_heightmap(
+        width=10, height=10, feature_scale=5.0, noise_level=0.05
+    )
 
 
 @pytest.fixture
 def medium_heightmap() -> np.ndarray:
     """Create a medium-sized test heightmap for testing."""
-    return create_test_heightmap(width=30, height=30, feature_scale=8.0, noise_level=0.1)
+    return create_test_heightmap(
+        width=30, height=30, feature_scale=8.0, noise_level=0.1
+    )
 
 
 @pytest.fixture

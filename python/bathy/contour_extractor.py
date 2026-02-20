@@ -1,12 +1,12 @@
 """Heightmap processing functionality for bathymesh."""
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Union
 
 import cv2
 import numpy as np
-from bathy.config import MeshGenerationConfig
+from bathy.config import MeshGenerationConfig, MeshUnits
 from shapely.geometry import Polygon
 from shapely.ops import unary_union
 from skimage import measure
@@ -22,6 +22,7 @@ class ContourExtractor:
     simplify_tolerance: float = 0.5
     max_segments: int = 100
     min_area_fraction: float = 0.01
+    mesh_units: MeshUnits = field(default_factory=MeshUnits)
 
     @classmethod
     def from_config(cls, config: MeshGenerationConfig) -> "ContourExtractor":
@@ -31,6 +32,7 @@ class ContourExtractor:
             simplify_tolerance=config.contour_extraction.simplify_tolerance,
             max_segments=config.contour_extraction.max_segments,
             min_area_fraction=config.contour_extraction.min_area_fraction,
+            mesh_units=config.heightmap_processing.mesh_units
         )
 
     def extract_contour_polygons(
@@ -245,6 +247,28 @@ class ContourExtractor:
                 cleaned_polygons.append(poly)
 
         result_polygons = cleaned_polygons
+        
+        # apply x,y mesh unit scaling
+        for i, poly in enumerate(result_polygons):
+            scaled_exterior = [
+                (
+                    coord[0] * self.mesh_units.units_x,
+                    coord[1] * self.mesh_units.units_y,
+                )
+                for coord in poly.exterior.coords
+            ]
+            scaled_interiors = []
+            for interior in poly.interiors:
+                scaled_interior = [
+                    (
+                        coord[0] * self.mesh_units.units_x,
+                        coord[1] * self.mesh_units.units_y,
+                    )
+                    for coord in interior.coords
+                ]
+                scaled_interiors.append(scaled_interior)
+
+            result_polygons[i] = Polygon(scaled_exterior, holes=scaled_interiors)
 
         return result_polygons
 

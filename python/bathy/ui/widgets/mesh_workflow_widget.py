@@ -14,16 +14,19 @@ from textual.worker import get_current_worker
 from bathy.config import (
     ContourExtractionConfig,
     HeighmapProcessingConfig,
+    HeightmapSplittingConfig,
     MeshCombinationConfig,
     MeshGenerationConfig,
+    MeshSplittingConfig,
     MeshUnits,
     PostProcessingConfig,
+    SplitPlaneConfig,
     TriangulationConfig,
 )
 from bathy.project_manager import Project
 from bathy.ui.widgets.config_table import ConfigTable
 from bathy.ui.widgets.processing_modal import ProcessingModal
-from bathy.workflows.generate_mesh import generate_mesh
+from bathy.workflows.generate_mesh import generate_mesh, save_mesh_result
 
 logger = logging.getLogger(__name__)
 
@@ -311,6 +314,27 @@ File Size: {size_mb:.2f} MB"""
             voxel_size=config_dict.get("voxel_size", 0.05),
         )
 
+        # Mesh splitting config (deprecated - use heightmap splitting instead)
+        # Parse grid splits as lists of floats
+        grid_splits_x = self._parse_float_list(config_dict.get("grid_splits_x", ""))
+        grid_splits_y = self._parse_float_list(config_dict.get("grid_splits_y", ""))
+        grid_splits_z = self._parse_float_list(config_dict.get("grid_splits_z", ""))
+
+        mesh_splitting = MeshSplittingConfig(
+            enabled=config_dict.get("mesh_splitting_enabled", False),
+            grid_splits_x=grid_splits_x,
+            grid_splits_y=grid_splits_y,
+            grid_splits_z=grid_splits_z,
+            cap_cut_faces=config_dict.get("cap_cut_faces", True),
+        )
+
+        # Heightmap splitting config (preferred method)
+        heightmap_splitting = HeightmapSplittingConfig(
+            enabled=config_dict.get("heightmap_splitting_enabled", False),
+            splits_x=self._parse_float_list(config_dict.get("splits_x", "")),
+            splits_y=self._parse_float_list(config_dict.get("splits_y", "")),
+        )
+
         return MeshGenerationConfig(
             stateless=config_dict.get("stateless", True),
             heightmap_processing=heightmap_processing,
@@ -318,7 +342,26 @@ File Size: {size_mb:.2f} MB"""
             contour_extraction=contour_extraction,
             triangulation=triangulation,
             post_processing=post_processing,
+            mesh_splitting=mesh_splitting,
+            heightmap_splitting=heightmap_splitting,
         )
+
+    def _parse_float_list(self, value: str) -> list[float]:
+        """Parse a comma-separated string into a list of floats.
+
+        Args:
+            value: Comma-separated string (e.g., "0.5, 1.5, 2.5") or empty string
+
+        Returns:
+            List of floats (empty list if parsing fails or input is empty)
+        """
+        if not value or not value.strip():
+            return []
+        try:
+            return [float(x.strip()) for x in value.split(",") if x.strip()]
+        except ValueError:
+            logger.warning(f"Could not parse float list: {value}")
+            return []
 
     @work(exclusive=True, thread=True)
     def _run_processing(
@@ -355,18 +398,62 @@ File Size: {size_mb:.2f} MB"""
 
             # Run workflow (blocking operation)
             self.app.call_from_thread(modal.append_log, "Loading heightmap...")
-            mesh_data, generator = generate_mesh(
-                file_path, config, save_path=output_path
-            )
+            result, generator = generate_mesh(file_path, config, save_path=output_path)
 
             if worker.is_cancelled:
                 return
 
+            # Log combined mesh info
             self.app.call_from_thread(
                 modal.append_log,
-                f"Generated mesh with {len(mesh_data.data.triangles)} triangles",
+                f"Generated mesh with {len(result.combined_mesh.triangles)} triangles",
             )
-            self.app.call_from_thread(modal.append_log, f"Saved to: {output_path}")
+
+            # Log tile info if heightmap splitting was enabled
+            if result.has_tiles:
+                self.app.call_from_thread(
+                    modal.append_log,
+                    f"Generated {len(result.tile_ids)} tiles ({result.tile_grid[0]}x{result.tile_grid[1]} grid):",
+                )
+                for tile_id, piece in zip(result.tile_ids, result.split_meshes):
+                    piece_info = f"  Tile {tile_id}: {len(piece.triangles)} triangles"
+                    self.app.call_from_thread(modal.append_log, piece_info)
+
+                # Log saved file paths
+                combined_path = output_path.with_stem(f"{output_path.stem}_combined")
+                self.app.call_from_thread(
+                    modal.append_log, f"Saved combined: {combined_path.name}"
+                )
+                for tile_id in result.tile_ids:
+                    tile_path = output_path.with_stem(f"{output_path.stem}_{tile_id}")
+                    self.app.call_from_thread(
+                        modal.append_log, f"Saved tile: {tile_path.name}"
+                    )
+
+            # Log split mesh info if plane-based splitting was enabled (deprecated)
+            elif result.has_splits:
+                self.app.call_from_thread(
+                    modal.append_log,
+                    f"Split into {result.num_pieces} pieces:",
+                )
+                for i, piece in enumerate(result.split_meshes):
+                    piece_info = f"  Part {i + 1}: {len(piece.triangles)} triangles"
+                    self.app.call_from_thread(modal.append_log, piece_info)
+
+                # Log saved file paths
+                combined_path = output_path.with_stem(f"{output_path.stem}_combined")
+                self.app.call_from_thread(
+                    modal.append_log, f"Saved combined: {combined_path.name}"
+                )
+                for i in range(result.num_pieces):
+                    piece_path = output_path.with_stem(
+                        f"{output_path.stem}_part{i + 1:02d}"
+                    )
+                    self.app.call_from_thread(
+                        modal.append_log, f"Saved piece {i + 1}: {piece_path.name}"
+                    )
+            else:
+                self.app.call_from_thread(modal.append_log, f"Saved to: {output_path}")
 
             # Update project metadata
             self._project.set_latest_mesh(output_path)

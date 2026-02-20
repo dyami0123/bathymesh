@@ -14,7 +14,7 @@ from PIL import Image as PILImage, ImageDraw
 from rich.text import Text
 from textual import events, work
 from textual.app import ComposeResult
-from textual.containers import Container, Vertical
+from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import Button, Label, Static
 from textual.worker import get_current_worker
 from textual_image.widget import Image
@@ -32,10 +32,6 @@ class BaseImagePreview(Vertical):
 
     Subclasses should override compose_preview_ui() to customize the UI.
     """
-
-    # Maximum dimensions for image preview (in terminal cells)
-    MAX_WIDTH = 80  # cells
-    MAX_HEIGHT = 40  # cells
 
     def __init__(self, **kwargs) -> None:
         """Initialize BaseImagePreview.
@@ -64,7 +60,13 @@ class BaseImagePreview(Vertical):
         """
         # Default implementation - basic preview
         yield Static("Click 'Load Preview' to display image", id="preview-placeholder")
-        yield Image(id="preview-image")
+
+        # Wrap image in horizontal container with spacers to center it
+        with Horizontal():
+            yield Static(id="preview-spacer-left")
+            yield Image(id="preview-image")
+            yield Static(id="preview-spacer-right")
+
         yield Button("🖼️  Load Preview", id="load-preview-button")
         yield Static("", id="preview-status")
 
@@ -153,24 +155,15 @@ class BaseImagePreview(Vertical):
             if original_image.mode not in ("RGB", "RGBA"):
                 original_image = original_image.convert("RGB")
 
-            # Calculate scaled dimensions
+            # Calculate scaled dimensions - only scale if image is very large
             width, height = original_image.size
-            cell_width = width // 10
-            cell_height = height // 20
 
-            # Scale down if necessary
+            # Scale down if necessary (CSS handles display sizing)
             scaled_image = original_image
-            if cell_width > self.MAX_WIDTH or cell_height > self.MAX_HEIGHT:
-                scale_x = (
-                    self.MAX_WIDTH / cell_width if cell_width > self.MAX_WIDTH else 1.0
-                )
-                scale_y = (
-                    self.MAX_HEIGHT / cell_height
-                    if cell_height > self.MAX_HEIGHT
-                    else 1.0
-                )
-                scale = min(scale_x, scale_y)
 
+            # Only scale if image is significantly larger than reasonable display size
+            if width > 1200 or height > 1200:
+                scale = min(1200 / width, 1200 / height)
                 new_width = int(width * scale)
                 new_height = int(height * scale)
                 scaled_image = original_image.resize(
@@ -180,6 +173,8 @@ class BaseImagePreview(Vertical):
                 logger.info(
                     f"Scaled image from {width}x{height} to {new_width}x{new_height}"
                 )
+            else:
+                logger.info(f"No scaling needed for {width}x{height} image")
 
             if worker.is_cancelled:
                 return
@@ -258,22 +253,35 @@ class InteractiveImagePreview(BaseImagePreview):
 
     Features:
     - Click to pick pixel color (RGB/Hex display)
-    - Mouse hover shows zoomed preview of area under cursor
-    - Real-time zoom updates as mouse moves
+    - Arrow keys to move selected pixel around
+    - Zoom preview shows the selected pixel area
     """
 
     # Zoom preview settings
     ZOOM_SIZE = 32  # Size of zoom preview in pixels
     ZOOM_FACTOR = 4  # Magnification factor
 
+    def __init__(self, **kwargs) -> None:
+        """Initialize InteractiveImagePreview."""
+        super().__init__(**kwargs)
+        self._selected_pixel_x: Union[int, None] = None
+        self._selected_pixel_y: Union[int, None] = None
+
     def compose_preview_ui(self) -> ComposeResult:
         """Compose interactive UI with color picking and zoom."""
         yield Label(
-            "[dim]Click to pick color, hover to see zoom preview[/]", id="preview-hint"
+            "[dim]Click to pick color or use arrow keys to select pixel[/]",
+            id="preview-hint",
         )
 
         yield Static("Click 'Load Preview' to display image", id="preview-placeholder")
-        yield Image(id="preview-image")
+
+        # Wrap image in horizontal container with spacers to center it
+        with Horizontal(id="preview-horizontal"):
+            yield Static(id="preview-spacer-left")
+            yield Image(id="preview-image")
+            yield Static(id="preview-spacer-right")
+
         yield Button("🖼️  Load Preview", id="load-preview-button")
         yield Static("", id="preview-status")
 
@@ -282,7 +290,7 @@ class InteractiveImagePreview(BaseImagePreview):
 
         # Zoom preview (hidden initially)
         with Container(id="preview-zoom-container"):
-            yield Label("Zoom Preview", classes="section-heading")
+            yield Label("Selected Pixel", classes="section-heading")
             yield Static("", id="preview-zoom-display")
 
     def _on_image_loaded(self) -> None:
@@ -305,17 +313,95 @@ class InteractiveImagePreview(BaseImagePreview):
         except Exception as e:
             logger.debug(f"Could not hide interactive elements: {e}")
 
+    def on_key(self, event: events.Key) -> None:
+        """Handle arrow key navigation to move selected pixel."""
+        
+        logger.info("Handling Key Press")
+        if not self._is_loaded or not self._pil_image:
+            logger.info("Image not loaded, cannot navigate pixels")
+            return
+        
+
+        # Initialize selected pixel to center if not set
+        if self._selected_pixel_x is None or self._selected_pixel_y is None:
+            self._selected_pixel_x = self._pil_image.width // 2
+            self._selected_pixel_y = self._pil_image.height // 2
+
+        # Move pixel based on arrow keys
+        arrow_map = {
+            "up": (0, -1),
+            "down": (0, 1),
+            "left": (-1, 0),
+            "right": (1, 0),
+        }
+
+        if event.key in arrow_map:
+            dx, dy = arrow_map[event.key]
+            logger.debug(f"Moving selected pixel by ({dx}, {dy})")
+            self._selected_pixel_x = max(
+                0, min(self._selected_pixel_x + dx, self._pil_image.width - 1)
+            )
+            self._selected_pixel_y = max(
+                0, min(self._selected_pixel_y + dy, self._pil_image.height - 1)
+            )
+
+            # Update the display
+            self._update_selected_pixel_display()
+            event.prevent_default()
+        else:
+            logger.debug(f"Ignoring non-arrow key: {event.key}")
+            
+    def _update_selected_pixel_display(self) -> None:
+        """Update the selected pixel color info and zoom preview."""
+        if self._selected_pixel_x is None or self._selected_pixel_y is None:
+            return
+
+        try:
+            # Get the color at selected position
+            pixel_color = self._pil_image.getpixel(
+                (self._selected_pixel_x, self._selected_pixel_y)
+            )
+
+            # Format color display
+            color_str, hex_str = self._format_color(pixel_color)
+
+            # Update color info
+            color_info = self.query_one("#preview-color-info", Static)
+            color_info.update(
+                f"[bold]Pixel:[/] ({self._selected_pixel_x}, {self._selected_pixel_y}) | "
+                f"[bold]Color:[/] {color_str} | [bold]Hex:[/] {hex_str}"
+            )
+
+            # Update zoom preview
+            self._update_zoom_preview(self._selected_pixel_x, self._selected_pixel_y)
+
+            logger.debug(
+                f"Selected pixel: ({self._selected_pixel_x}, {self._selected_pixel_y}) = {color_str} ({hex_str})"
+            )
+
+        except Exception as e:
+            logger.error(f"Error updating selected pixel display: {e}")
+
     def on_click(self, event: events.Click) -> None:
         """Handle click events for color picking."""
         if not self._is_loaded or not self._pil_image or not self._scaled_image:
+            logger.debug("Image not loaded, cannot pick color")
             return
 
         try:
             image_widget = self.query_one("#preview-image", Image)
 
-            # Check if click was on image
-            clicked_widget = self.get_widget_at(event.screen_offset)[0]
-            if clicked_widget != image_widget:
+            # Check if click was on image by checking region bounds
+            region = image_widget.region
+            if not (
+                region.x <= event.screen_x < region.x + region.width
+                and region.y <= event.screen_y < region.y + region.height
+            ):
+                logger.debug("Click outside image bounds, ignoring")
+                logger.debug(
+                    f"Click at ({event.screen_x}, {event.screen_y}),"
+                    f" image region: {region}"
+                )
                 return
 
             # Get pixel coordinates and color
@@ -325,6 +411,10 @@ class InteractiveImagePreview(BaseImagePreview):
 
             if pixel_color is None:
                 return
+
+            # Store as selected pixel
+            self._selected_pixel_x = pixel_x
+            self._selected_pixel_y = pixel_y
 
             # Format color display
             color_str, hex_str = self._format_color(pixel_color)
@@ -336,39 +426,15 @@ class InteractiveImagePreview(BaseImagePreview):
                 f"[bold]Color:[/] {color_str} | [bold]Hex:[/] {hex_str}"
             )
 
+            # Update zoom preview
+            self._update_zoom_preview(pixel_x, pixel_y)
+
             logger.debug(
                 f"Color picked: ({pixel_x}, {pixel_y}) = {color_str} ({hex_str})"
             )
 
         except Exception as e:
             logger.error(f"Error picking pixel color: {e}", exc_info=True)
-
-    def on_mouse_move(self, event: events.MouseMove) -> None:
-        """Handle mouse move to update zoom preview."""
-        if not self._is_loaded or not self._pil_image or not self._scaled_image:
-            return
-
-        try:
-            image_widget = self.query_one("#preview-image", Image)
-
-            # Check if mouse is over image
-            widget_at_pos = self.get_widget_at(event.screen_offset)[0]
-            if widget_at_pos != image_widget:
-                return
-
-            # Get pixel coordinates
-            pixel_x, pixel_y, _ = self._get_pixel_at_position(
-                event.screen_x, event.screen_y, image_widget
-            )
-
-            if pixel_x is None or pixel_y is None:
-                return
-
-            # Generate zoom preview
-            self._update_zoom_preview(pixel_x, pixel_y)
-
-        except Exception as e:
-            logger.debug(f"Error updating zoom preview: {e}")
 
     def _get_pixel_at_position(
         self, screen_x: int, screen_y: int, image_widget: Image

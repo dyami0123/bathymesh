@@ -11,6 +11,7 @@ import logging
 from pathlib import Path
 
 from bathy.ui.app import run_tui
+from textual.logging import TextualHandler
 
 
 def main():
@@ -32,14 +33,16 @@ def main():
     args = parser.parse_args()
 
     # Configure logging
-    log_level = logging.DEBUG if args.debug else logging.INFO
+    log_level = logging.DEBUG #if args.debug else logging.INFO
     logging.basicConfig(
         level=log_level,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        format="%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s",
         handlers=[
             logging.FileHandler("bathymesh_tui.log"),
-            logging.StreamHandler(),
+            # logging.StreamHandler(),
+            TextualHandler(),
         ],
+        force=True,
     )
 
     # Run the TUI

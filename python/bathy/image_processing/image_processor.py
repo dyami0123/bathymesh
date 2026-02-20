@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, Literal
 
 import numpy as np
 from bathy.config import ImageProcessingConfig
@@ -144,6 +144,7 @@ class ImageProcessor:
                 heightmap,
                 max_iterations=self.config.fill_max_iterations,
                 neighborhood_size=self.config.fill_neighborhood,
+                method=self.config.fill_nan_approach,
             )
 
         return heightmap
@@ -198,6 +199,7 @@ class ImageProcessor:
         max_iterations: int = 100,
         convergence_threshold: float = 1e-6,
         neighborhood_size: int = 1,
+        method: Literal["sorted","random"] = "sorted"
     ) -> np.ndarray:
         """
         Iteratively fill NaN values with the average of their non-NaN neighbors.
@@ -245,10 +247,16 @@ class ImageProcessor:
                 # Process each NaN pixel
                 nan_locations = np.where(nan_mask)
                 pixels_filled_this_iteration = 0
+                
+                if method == "random":
+                    indices = np.arange(len(nan_locations[0]))
+                    np.random.shuffle(indices)
+                    nan_locations = (nan_locations[0][indices], nan_locations[1][indices])
 
                 for i, j in tqdm(
                     zip(nan_locations[0], nan_locations[1]),
                     desc="Processing NaN pixels",
+                    total=len(nan_locations[0]),
                     leave=True,
                     position=1,
                 ):
@@ -279,13 +287,13 @@ class ImageProcessor:
                         )
                     break
 
-                # Calculate change for convergence check
-                change = np.nanmean(np.abs(filled_heightmap - old_heightmap))
-                if change < convergence_threshold:
-                    self.logger.info(
-                        f"Converged after {iteration + 1} iterations (change: {change:.2e})"
-                    )
-                    break
+                # # Calculate change for convergence check
+                # change = np.nanmean(np.abs(filled_heightmap - old_heightmap))
+                # if change < convergence_threshold:
+                #     self.logger.info(
+                #         f"Converged after {iteration + 1} iterations (change: {change:.2e})"
+                #     )
+                #     break
 
                 # Update progress
                 current_nan_count = np.sum(np.isnan(filled_heightmap))
@@ -293,7 +301,7 @@ class ImageProcessor:
                     {
                         "NaN pixels": f"{current_nan_count:,}",
                         "Filled": f"{pixels_filled_this_iteration:,}",
-                        "Change": f"{change:.2e}",
+                        # "Change": f"{change:.2e}",
                     }
                 )
                 pbar.update(1)

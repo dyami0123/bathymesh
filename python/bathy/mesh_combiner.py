@@ -2,7 +2,7 @@
 
 import logging
 from dataclasses import dataclass
-from typing import List
+from typing import List, Union
 
 import open3d as o3d
 from bathy.config import MeshGenerationConfig
@@ -25,7 +25,7 @@ class MeshCombiner:
 
     def combine_meshes(
         self, meshes: List[o3d.geometry.TriangleMesh]
-    ) -> o3d.geometry.TriangleMesh:
+    ) -> Union[None, o3d.geometry.TriangleMesh]:
         """
         Combine multiple meshes into a single mesh.
 
@@ -39,6 +39,7 @@ class MeshCombiner:
             ValueError: If no valid meshes provided
         """
         if not meshes:
+            return None
             raise ValueError("No meshes provided for combination")
 
         # Filter out empty meshes
@@ -50,8 +51,8 @@ class MeshCombiner:
 
         logger.info(f"Combining {len(valid_meshes)} meshes")
 
-        # Start with first mesh
-        combined = valid_meshes[0]
+        # Start with a copy of the first mesh to avoid modifying the original
+        combined = o3d.geometry.TriangleMesh(valid_meshes[0])
 
         # Add remaining meshes
         for i, mesh in enumerate(valid_meshes[1:], 1):

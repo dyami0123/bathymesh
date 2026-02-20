@@ -62,6 +62,9 @@ class MeshPostProcessor:
         Returns:
             Processed mesh (operates in-place but returns for convenience)
         """
+        if mesh is None:
+            return
+        
         if len(mesh.vertices) == 0:
             logger.warning("Empty mesh provided, skipping processing")
             return mesh
