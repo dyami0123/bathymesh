@@ -1,12 +1,46 @@
 from collections import OrderedDict
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Any
 from pydantic import BaseModel, Field
+from pydantic.json_schema import JsonSchemaValue
+from pydantic_core import core_schema
 
 import numpy as np
 
 
-class MeshUnits(BaseModel):
+class OutputModel(BaseModel):
+    """
+    Base model for API output types.
+
+    Fields with defaults or default_factory are marked in the JSON schema
+    so they can be treated as required in output types.
+    """
+
+    @classmethod
+    def model_json_schema(
+        cls, by_alias: bool = True, ref_template: str = "#/$defs/{model}", **kwargs: Any
+    ) -> dict[str, Any]:
+        """Generate JSON schema with factory defaults marked."""
+        schema = super().model_json_schema(
+            by_alias=by_alias, ref_template=ref_template, **kwargs
+        )
+
+        # Mark properties that have default_factory
+        for field_name, field_info in cls.model_fields.items():
+            if field_info.default_factory is not None:
+                # Use serialization name (alias if present)
+                prop_name = (
+                    field_info.serialization_alias or field_info.alias or field_name
+                )
+
+                if "properties" in schema and prop_name in schema["properties"]:
+                    # Mark with vendor extension for downstream processing
+                    schema["properties"][prop_name]["x-has-default-factory"] = True
+
+        return schema
+
+
+class MeshUnits(OutputModel):
     """Scaling parameters for mesh generation."""
 
     units_x: float = 1.0
@@ -14,7 +48,7 @@ class MeshUnits(BaseModel):
     units_z: float = 1.0
 
 
-class HeighmapProcessingConfig(BaseModel):
+class HeighmapProcessingConfig(OutputModel):
     exterior_buffer_width: int = Field(default=0)
 
     exterior_buffer_value: float = Field(default=0.0)
@@ -37,14 +71,14 @@ class HeighmapProcessingConfig(BaseModel):
     )
 
 
-class MeshCombinationConfig(BaseModel):
+class MeshCombinationConfig(OutputModel):
     merge_threshold: float = Field(
         default=1e-6,
         description="Threshold for merging close vertices when combining meshes",
     )
 
 
-class ContourExtractionConfig(BaseModel):
+class ContourExtractionConfig(OutputModel):
     min_polygon_area: float = Field(
         default=1e-2,
         description="Minimum polygon area for contour extraction",
@@ -63,8 +97,7 @@ class ContourExtractionConfig(BaseModel):
     )
 
 
-class TriangulationConfig(BaseModel):
-
+class TriangulationConfig(OutputModel):
     triangulator_add_interior_points: bool = Field(
         default=True, description="Whether to add interior points during triangulation"
     )
@@ -73,7 +106,7 @@ class TriangulationConfig(BaseModel):
     )
 
 
-class PostProcessingConfig(BaseModel):
+class PostProcessingConfig(OutputModel):
     apply_post_processing: bool = Field(
         default=True, description="Whether to apply post-processing to meshes"
     )
@@ -106,8 +139,7 @@ class PostProcessingConfig(BaseModel):
     )
 
 
-class MeshGenerationConfig(BaseModel):
-
+class MeshGenerationConfig(OutputModel):
     stateless: bool = Field(
         default=True, description="Whether to run in stateless mode (no visualizations)"
     )
@@ -129,8 +161,7 @@ class MeshGenerationConfig(BaseModel):
     )
 
 
-class ImageProcessingConfig(BaseModel):
-
+class ImageProcessingConfig(OutputModel):
     preserve_full_resolution: bool = Field(
         default=True, description="Whether to preserve full image resolution"
     )
@@ -172,8 +203,7 @@ class ImageProcessingConfig(BaseModel):
     )
 
 
-class ProjectConfig(BaseModel):
-
+class ProjectConfig(OutputModel):
     mesh_generation: MeshGenerationConfig = Field(
         default_factory=MeshGenerationConfig,
     )
