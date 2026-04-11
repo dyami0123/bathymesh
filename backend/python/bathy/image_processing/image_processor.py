@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from backend.python.bathy.config import ImageProcessingConfig
-from backend.python.bathy.image_processing.color_mapper import ColorMapper
+from bathy.python.bathy.config import ImageProcessingConfig
+from bathy.python.bathy.image_processing.color_mapper import ColorMapper
 from PIL import Image
 from skimage.color import rgb2lab
 from sklearn.cluster import KMeans

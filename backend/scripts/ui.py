@@ -1,4 +1,4 @@
-from backend.python.bathy.ui.test_ui import BathymeshApp
+from bathy.python.bathy.ui.test_ui import BathymeshApp
 
 
 if __name__ == "__main__":

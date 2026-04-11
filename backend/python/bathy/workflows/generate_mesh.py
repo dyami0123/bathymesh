@@ -3,9 +3,9 @@ from typing import Union
 
 import numpy as np
 import open3d as o3d
-from backend.python.bathy.config import MeshGenerationConfig
-from backend.python.bathy.data_model import HeightmapData, MeshData
-from backend.python.bathy.mesh_generator import MeshGenerator
+from bathy.python.bathy.config import MeshGenerationConfig
+from bathy.python.bathy.data_model import HeightmapData, MeshData
+from bathy.python.bathy.mesh_generator import MeshGenerator
 
 
 def generate_mesh(

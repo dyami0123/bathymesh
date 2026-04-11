@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 
 import numpy as np
-from backend.python.bathy.config import (
+from bathy.python.bathy.config import (
     ContourExtractionConfig,
     HeighmapProcessingConfig,
     MeshCombinationConfig,
@@ -11,8 +11,8 @@ from backend.python.bathy.config import (
     PostProcessingConfig,
     TriangulationConfig,
 )
-from backend.python.bathy.workflows.generate_mesh import generate_mesh
-from backend.python.bathy.viz.contours import contour_plot
+from bathy.python.bathy.workflows.generate_mesh import generate_mesh
+from bathy.python.bathy.viz.contours import contour_plot
 
 if __name__ == "__main__":
     # Configure logging

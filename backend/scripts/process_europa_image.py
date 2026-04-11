@@ -1,9 +1,9 @@
 import logging
 from pathlib import Path
 
-from backend.python.bathy.workflows.process_image import process_image
-from backend.python.bathy.config import ImageProcessingConfig
-from backend.python.bathy.viz.heightmap import heightmap_plot
+from bathy.python.bathy.workflows.process_image import process_image
+from bathy.python.bathy.config import ImageProcessingConfig
+from bathy.python.bathy.viz.heightmap import heightmap_plot
 
 if __name__ == "__main__":
     # Configure logging
@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
     # invert order to have lowest colors first
     color_map = dict(reversed(list(color_map.items())))
-    
+
     config = ImageProcessingConfig(
         preserve_full_resolution=True,
         max_dimension=None,
@@ -41,13 +41,13 @@ if __name__ == "__main__":
         color_map=color_map,
         default_fuzziness=fuzz,
     )
-    
+
     heightmap_data = process_image(
         image_path=image_path,
         config=config,
         save_path=save_path,
     )
-    
+
     heightmap_plot(
         data=heightmap_data,
         save_path=data_dir / "processed" / "europa.png",

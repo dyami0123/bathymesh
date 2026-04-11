@@ -4,7 +4,7 @@ from typing import Optional
 
 import numpy as np
 import open3d as o3d
-from backend.python.bathy.config import MeshGenerationConfig
+from bathy.python.bathy.config import MeshGenerationConfig
 from shapely.geometry import Polygon
 
 logger = logging.getLogger(__name__)

@@ -2,9 +2,9 @@ from pathlib import Path
 from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
-from backend.python.bathy.config import ImageProcessingConfig
-from backend.python.bathy.data_model import RawHeightmapData
-from backend.python.bathy.image_processing.image_processor import ImageProcessor
+from bathy.python.bathy.config import ImageProcessingConfig
+from bathy.python.bathy.data_model import RawHeightmapData
+from bathy.python.bathy.image_processing.image_processor import ImageProcessor
 
 
 def process_image(

@@ -2,9 +2,9 @@ import logging
 from pathlib import Path
 
 import numpy as np
-from backend.python.bathy.config import *
-from backend.python.bathy.workflows.generate_mesh import generate_mesh
-from backend.python.bathy.viz.contours import contour_plot
+from bathy.python.bathy.config import *
+from bathy.python.bathy.workflows.generate_mesh import generate_mesh
+from bathy.python.bathy.viz.contours import contour_plot
 
 if __name__ == "__main__":
     # Configure logging
@@ -19,7 +19,6 @@ if __name__ == "__main__":
     save_mesh_path = data_dir / "meshes" / "europa.stl"
 
     save_mesh_path.parent.mkdir(parents=True, exist_ok=True)
-
 
     exterior_buffer_width = 20
     exterior_buffer_value = 0.0
@@ -41,7 +40,7 @@ if __name__ == "__main__":
     thickness = 0.5  # Thickness for extruded meshes
 
     create_visuals: bool = True
-    
+
     config = MeshGenerationConfig(
         heightmap_processing=HeighmapProcessingConfig(
             exterior_buffer_value=exterior_buffer_value,
@@ -75,13 +74,11 @@ if __name__ == "__main__":
             target_triangle_count=100000,
             voxel_size=0.05,
         ),
-        stateless=not create_visuals
+        stateless=not create_visuals,
     )
 
     heightmap_data, generator = generate_mesh(
-        heightmap_path,
-        config=config,
-        save_path=save_mesh_path
+        heightmap_path, config=config, save_path=save_mesh_path
     )
 
     if create_visuals:

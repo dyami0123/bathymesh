@@ -3,8 +3,9 @@ name = "bathymesh"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.12,<3.15"
 dependencies = [
+    "fastapi>=0.135.3",
     "geopandas>=1.1.1",
     "gmsh>=4.14.1",
     "ipykernel>=6.30.1",
@@ -17,6 +18,7 @@ dependencies = [
     "opencv-python>=4.11.0.86",
     "pandas>=2.3.2",
     "pillow>=11.3.0",
+    "pydantic>=2.12.5",
     "pygmsh>=7.1.17",
     "pymeshlab>=2025.7",
     "pytest>=8.4.2",
@@ -28,13 +30,18 @@ dependencies = [
     "textual>=6.8.0",
     "textual-dev>=1.8.0",
     "tqdm>=4.66.0",
-    "triangle>=20250106",
+    "triangle",
+    "uvicorn>=0.44.0",
     "xarray>=2025.9.0",
 ]
 
 [build-system]
 requires = ["hatchling"]
-build-backend = "hatchling.build"
+build-bathy = "hatchling.build"
+
+
+[tool.uv.extra-build-dependencies]
+bathymesh = ["setuptools"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["python/bathy"]
@@ -47,6 +54,11 @@ members = [
 
 [tool.uv.sources]
 bathymesh = { workspace = true }
+triangle = { git = "https://github.com/drufat/triangle" }
+open3d = [
+    { url = "https://github.com/isl-org/Open3D/releases/download/main-devel/open3d-0.19.0-cp314-cp314-manylinux_2_35_x86_64.whl", marker = "python_version >= '3.14' and python_version < '3.15' and sys_platform == 'linux'" },
+]
+
 
 [dependency-groups]
 dev = [

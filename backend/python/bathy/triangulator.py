@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import List, Tuple, Union
 
 import numpy as np
-from backend.python.bathy.config import MeshGenerationConfig
+from bathy.python.bathy.config import MeshGenerationConfig
 from scipy.spatial import Delaunay
 from shapely.geometry import MultiPolygon, Point, Polygon
 
