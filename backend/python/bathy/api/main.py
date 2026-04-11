@@ -49,13 +49,17 @@ async def validate_project_config(project_config: ProjectConfig) -> bool:
     return True
 
 
-if __name__ == "__main__":
+def serve() -> None:
+    """Run the API server with local development defaults."""
     import uvicorn
 
-    if __name__ == "__main__":
-        uvicorn.run(
-            "bathy.api.main:app",
-            host="0.0.0.0",
-            port=8000,
-            reload=True,  # Auto-reload on code changes
-        )
+    uvicorn.run(
+        "bathy.api.main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+    )
+
+
+if __name__ == "__main__":
+    serve()

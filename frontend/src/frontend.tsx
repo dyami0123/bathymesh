@@ -6,14 +6,17 @@
  */
 
 import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
+import { createRoot, type Root } from "react-dom/client";
 import { App } from "./App";
 
 const elem = document.getElementById("root")!;
-const root = import.meta.hot?.data.root ?? createRoot(elem);
+let root: Root;
 
 if (import.meta.hot) {
+  root = import.meta.hot.data.root ?? createRoot(elem);
   import.meta.hot.data.root = root;
+} else {
+  root = createRoot(elem);
 }
 
 root.render(

@@ -35,9 +35,12 @@ dependencies = [
     "xarray>=2025.9.0",
 ]
 
+[project.scripts]
+serve = "bathy.api.main:serve"
+
 [build-system]
 requires = ["hatchling"]
-build-bathy = "hatchling.build"
+build-backend = "hatchling.build"
 
 
 [tool.uv.extra-build-dependencies]
