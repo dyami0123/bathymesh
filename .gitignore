@@ -179,3 +179,5 @@ Thumbs.db
 *.png
 *.npy
 *.xcf
+
+learning/
