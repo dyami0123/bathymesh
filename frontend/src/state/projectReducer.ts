@@ -1,10 +1,11 @@
-import type { ProjectConfigOutput } from "../client";
+import type { ProjectConfigOutput, ContourExtractionConfig } from "../client";
 import { produce } from "immer";
 
 export type Action =
   | { type: "set_project"; payload: ProjectConfigOutput }
   | { type: "set_stateless"; payload: boolean }
   | { type: "set_exterior_buffer_width"; payload: number }
+  | { type: "set_contour_extraction"; payload: ContourExtractionConfig }
   | {
       type: "update_color_map";
       color: string;
@@ -28,6 +29,10 @@ export function projectReducer(
       case "set_exterior_buffer_width":
         draft.mesh_generation.heightmap_processing.exterior_buffer_width =
           action.payload;
+        return;
+
+      case "set_contour_extraction":
+        draft.mesh_generation.contour_extraction = action.payload;
         return;
 
       case "update_color_map":

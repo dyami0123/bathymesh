@@ -12,6 +12,7 @@
   "dependencies": {
     "bun-plugin-tailwind": "^0.1.2",
     "immer": "^11.1.4",
+    "js-yaml": "^4.1.1",
     "prettier": "^3.8.2",
     "react": "^19",
     "react-dom": "^19",
@@ -20,6 +21,7 @@
   "devDependencies": {
     "@hey-api/openapi-ts": "0.95.0",
     "@types/bun": "latest",
+    "@types/js-yaml": "^4.0.9",
     "@types/react": "^19",
     "@types/react-dom": "^19"
   }
