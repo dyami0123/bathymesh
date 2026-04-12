@@ -41,7 +41,12 @@ def transform_schemas_for_output(openapi_schema: dict) -> dict:
             continue
 
         # Get corresponding Python model
-        model_class = model_map.get(schema_name)
+        # FastAPI may append -Input or -Output suffix
+        base_name = schema_name.removesuffix("-Input").removesuffix("-Output")
+        model_class = model_map.get(base_name)
+        if not model_class:
+            # Try exact match
+            model_class = model_map.get(schema_name)
         if not model_class:
             continue
 
