@@ -82,6 +82,44 @@ export type HeighmapProcessingConfig = {
 };
 
 /**
+ * HeightmapDataJson
+ */
+export type HeightmapDataJson = {
+    /**
+     * Data
+     */
+    data: Array<Array<number>>;
+};
+
+/**
+ * HeightmapParams
+ */
+export type HeightmapParams = {
+    /**
+     * Is Preview
+     */
+    is_preview: boolean;
+    /**
+     * Max Dimension Override
+     */
+    max_dimension_override?: number | null;
+};
+
+/**
+ * ImageData
+ */
+export type ImageData = {
+    /**
+     * Data
+     */
+    data: Blob | File;
+    /**
+     * Type
+     */
+    type: 'image/png' | 'image/jpeg' | 'image/tiff';
+};
+
+/**
  * ImageProcessingConfig
  */
 export type ImageProcessingConfig = {
@@ -140,6 +178,46 @@ export type ImageProcessingConfig = {
      * Default fuzziness value (Delta E) when not specified
      */
     default_fuzziness: number;
+};
+
+/**
+ * JobStatus
+ */
+export type JobStatus = {
+    /**
+     * Jobid
+     */
+    jobId: string;
+    /**
+     * Status
+     */
+    status: 'pending' | 'processing' | 'completed' | 'failed';
+    /**
+     * Jobtype
+     */
+    jobType: string;
+    /**
+     * Createdat
+     */
+    createdAt: string;
+    /**
+     * Startedat
+     */
+    startedAt?: string | null;
+    /**
+     * Completedat
+     */
+    completedAt?: string | null;
+    /**
+     * Error
+     */
+    error?: string | null;
+    /**
+     * Result
+     */
+    result?: {
+        [key: string]: unknown;
+    } | null;
 };
 
 /**
@@ -278,6 +356,12 @@ export type PostProcessingConfig = {
  * ProjectConfig
  */
 export type ProjectConfigInput = {
+    /**
+     * Project Id
+     *
+     * Unique identifier for the project
+     */
+    project_id: string;
     mesh_generation: MeshGenerationConfigInput;
     image_processing: ImageProcessingConfig;
 };
@@ -286,6 +370,12 @@ export type ProjectConfigInput = {
  * ProjectConfig
  */
 export type ProjectConfigOutput = {
+    /**
+     * Project Id
+     *
+     * Unique identifier for the project
+     */
+    project_id: string;
     mesh_generation: MeshGenerationConfigOutput;
     image_processing: ImageProcessingConfig;
 };
@@ -464,3 +554,162 @@ export type ValidateProjectConfigApiConfigValidatePostResponses = {
 };
 
 export type ValidateProjectConfigApiConfigValidatePostResponse = ValidateProjectConfigApiConfigValidatePostResponses[keyof ValidateProjectConfigApiConfigValidatePostResponses];
+
+export type GetProjectImageApiImageProjectIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+    };
+    query?: {
+        /**
+         * Max Dimension
+         */
+        max_dimension?: number | null;
+    };
+    url: '/api/image/{project_id}';
+};
+
+export type GetProjectImageApiImageProjectIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetProjectImageApiImageProjectIdGetError = GetProjectImageApiImageProjectIdGetErrors[keyof GetProjectImageApiImageProjectIdGetErrors];
+
+export type GetProjectImageApiImageProjectIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type SetProjectImageApiImageProjectIdPutData = {
+    body: ImageData;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+    };
+    query?: never;
+    url: '/api/image/{project_id}';
+};
+
+export type SetProjectImageApiImageProjectIdPutErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SetProjectImageApiImageProjectIdPutError = SetProjectImageApiImageProjectIdPutErrors[keyof SetProjectImageApiImageProjectIdPutErrors];
+
+export type SetProjectImageApiImageProjectIdPutResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetProjectHeightmapApiHeightmapProjectIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+    };
+    query: {
+        /**
+         * Is Preview
+         */
+        is_preview: boolean;
+    };
+    url: '/api/heightmap/{project_id}';
+};
+
+export type GetProjectHeightmapApiHeightmapProjectIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetProjectHeightmapApiHeightmapProjectIdGetError = GetProjectHeightmapApiHeightmapProjectIdGetErrors[keyof GetProjectHeightmapApiHeightmapProjectIdGetErrors];
+
+export type GetProjectHeightmapApiHeightmapProjectIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: HeightmapDataJson;
+};
+
+export type GetProjectHeightmapApiHeightmapProjectIdGetResponse = GetProjectHeightmapApiHeightmapProjectIdGetResponses[keyof GetProjectHeightmapApiHeightmapProjectIdGetResponses];
+
+export type CalculateProjectHeightmapApiHeightmapProjectIdPostData = {
+    /**
+     * Params
+     */
+    body: HeightmapParams | null;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+    };
+    query?: never;
+    url: '/api/heightmap/{project_id}';
+};
+
+export type CalculateProjectHeightmapApiHeightmapProjectIdPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CalculateProjectHeightmapApiHeightmapProjectIdPostError = CalculateProjectHeightmapApiHeightmapProjectIdPostErrors[keyof CalculateProjectHeightmapApiHeightmapProjectIdPostErrors];
+
+export type CalculateProjectHeightmapApiHeightmapProjectIdPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: JobStatus;
+};
+
+export type CalculateProjectHeightmapApiHeightmapProjectIdPostResponse = CalculateProjectHeightmapApiHeightmapProjectIdPostResponses[keyof CalculateProjectHeightmapApiHeightmapProjectIdPostResponses];
+
+export type GetJobStatusApiJobsJobIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/jobs/{job_id}';
+};
+
+export type GetJobStatusApiJobsJobIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetJobStatusApiJobsJobIdGetError = GetJobStatusApiJobsJobIdGetErrors[keyof GetJobStatusApiJobsJobIdGetErrors];
+
+export type GetJobStatusApiJobsJobIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: JobStatus;
+};
+
+export type GetJobStatusApiJobsJobIdGetResponse = GetJobStatusApiJobsJobIdGetResponses[keyof GetJobStatusApiJobsJobIdGetResponses];

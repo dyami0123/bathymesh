@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DefaultsApiConfigDefaultsGetData, DefaultsApiConfigDefaultsGetResponses, GetProjectConfigApiConfigProjectIdGetData, GetProjectConfigApiConfigProjectIdGetErrors, GetProjectConfigApiConfigProjectIdGetResponses, HealthCheckApiHealthGetData, HealthCheckApiHealthGetResponses, RootGetData, RootGetResponses, SetProjectConfigApiConfigProjectIdPutData, SetProjectConfigApiConfigProjectIdPutErrors, SetProjectConfigApiConfigProjectIdPutResponses, ValidateProjectConfigApiConfigValidatePostData, ValidateProjectConfigApiConfigValidatePostErrors, ValidateProjectConfigApiConfigValidatePostResponses } from './types.gen';
+import type { CalculateProjectHeightmapApiHeightmapProjectIdPostData, CalculateProjectHeightmapApiHeightmapProjectIdPostErrors, CalculateProjectHeightmapApiHeightmapProjectIdPostResponses, DefaultsApiConfigDefaultsGetData, DefaultsApiConfigDefaultsGetResponses, GetJobStatusApiJobsJobIdGetData, GetJobStatusApiJobsJobIdGetErrors, GetJobStatusApiJobsJobIdGetResponses, GetProjectConfigApiConfigProjectIdGetData, GetProjectConfigApiConfigProjectIdGetErrors, GetProjectConfigApiConfigProjectIdGetResponses, GetProjectHeightmapApiHeightmapProjectIdGetData, GetProjectHeightmapApiHeightmapProjectIdGetErrors, GetProjectHeightmapApiHeightmapProjectIdGetResponses, GetProjectImageApiImageProjectIdGetData, GetProjectImageApiImageProjectIdGetErrors, GetProjectImageApiImageProjectIdGetResponses, HealthCheckApiHealthGetData, HealthCheckApiHealthGetResponses, RootGetData, RootGetResponses, SetProjectConfigApiConfigProjectIdPutData, SetProjectConfigApiConfigProjectIdPutErrors, SetProjectConfigApiConfigProjectIdPutResponses, SetProjectImageApiImageProjectIdPutData, SetProjectImageApiImageProjectIdPutErrors, SetProjectImageApiImageProjectIdPutResponses, ValidateProjectConfigApiConfigValidatePostData, ValidateProjectConfigApiConfigValidatePostErrors, ValidateProjectConfigApiConfigValidatePostResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -61,3 +61,42 @@ export const validateProjectConfigApiConfigValidatePost = <ThrowOnError extends 
         ...options.headers
     }
 });
+
+/**
+ * Get Project Image
+ */
+export const getProjectImageApiImageProjectIdGet = <ThrowOnError extends boolean = false>(options: Options<GetProjectImageApiImageProjectIdGetData, ThrowOnError>) => (options.client ?? client).get<GetProjectImageApiImageProjectIdGetResponses, GetProjectImageApiImageProjectIdGetErrors, ThrowOnError>({ url: '/api/image/{project_id}', ...options });
+
+/**
+ * Set Project Image
+ */
+export const setProjectImageApiImageProjectIdPut = <ThrowOnError extends boolean = false>(options: Options<SetProjectImageApiImageProjectIdPutData, ThrowOnError>) => (options.client ?? client).put<SetProjectImageApiImageProjectIdPutResponses, SetProjectImageApiImageProjectIdPutErrors, ThrowOnError>({
+    url: '/api/image/{project_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get Project Heightmap
+ */
+export const getProjectHeightmapApiHeightmapProjectIdGet = <ThrowOnError extends boolean = false>(options: Options<GetProjectHeightmapApiHeightmapProjectIdGetData, ThrowOnError>) => (options.client ?? client).get<GetProjectHeightmapApiHeightmapProjectIdGetResponses, GetProjectHeightmapApiHeightmapProjectIdGetErrors, ThrowOnError>({ url: '/api/heightmap/{project_id}', ...options });
+
+/**
+ * Calculate Project Heightmap
+ */
+export const calculateProjectHeightmapApiHeightmapProjectIdPost = <ThrowOnError extends boolean = false>(options: Options<CalculateProjectHeightmapApiHeightmapProjectIdPostData, ThrowOnError>) => (options.client ?? client).post<CalculateProjectHeightmapApiHeightmapProjectIdPostResponses, CalculateProjectHeightmapApiHeightmapProjectIdPostErrors, ThrowOnError>({
+    url: '/api/heightmap/{project_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get Job Status
+ */
+export const getJobStatusApiJobsJobIdGet = <ThrowOnError extends boolean = false>(options: Options<GetJobStatusApiJobsJobIdGetData, ThrowOnError>) => (options.client ?? client).get<GetJobStatusApiJobsJobIdGetResponses, GetJobStatusApiJobsJobIdGetErrors, ThrowOnError>({ url: '/api/jobs/{job_id}', ...options });

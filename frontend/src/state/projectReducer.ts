@@ -1,11 +1,10 @@
 import type { ProjectConfigOutput, ContourExtractionConfig } from "../client";
 import { produce } from "immer";
+import { setNestedValue } from "@/utilites";
 
 export type Action =
   | { type: "set_project"; payload: ProjectConfigOutput }
-  | { type: "set_stateless"; payload: boolean }
-  | { type: "set_exterior_buffer_width"; payload: number }
-  | { type: "set_contour_extraction"; payload: ContourExtractionConfig }
+  | { type: "set_by_path"; path: string; value: unknown }
   | {
       type: "update_color_map";
       color: string;
@@ -22,18 +21,10 @@ export function projectReducer(
       case "set_project":
         return action.payload;
 
-      case "set_stateless":
-        draft.mesh_generation.stateless = action.payload;
+      case "set_by_path": {
+        setNestedValue(draft, action.path, action.value);
         return;
-
-      case "set_exterior_buffer_width":
-        draft.mesh_generation.heightmap_processing.exterior_buffer_width =
-          action.payload;
-        return;
-
-      case "set_contour_extraction":
-        draft.mesh_generation.contour_extraction = action.payload;
-        return;
+      }
 
       case "update_color_map":
         draft.image_processing.color_map[action.color] = {
