@@ -10,19 +10,26 @@
     "openapi-ts": "openapi-ts"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.0",
+    "buffer": "^6.0.3",
     "bun-plugin-tailwind": "^0.1.2",
     "immer": "^11.1.4",
     "js-yaml": "^4.1.1",
+    "plotly.js-dist-min": "^3.5.0",
     "prettier": "^3.8.2",
     "react": "^19",
     "react-dom": "^19",
-    "tailwindcss": "^4.1.11"
+    "react-plotly.js": "^2.6.0",
+    "tailwindcss": "^4.1.11",
+    "three": "^0.183.2"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "0.95.0",
     "@types/bun": "latest",
     "@types/js-yaml": "^4.0.9",
     "@types/react": "^19",
-    "@types/react-dom": "^19"
+    "@types/react-dom": "^19",
+    "@types/react-plotly.js": "^2.6.4"
   }
 }
