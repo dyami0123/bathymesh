@@ -5,11 +5,12 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from bathy.python.bathy.config import ImageProcessingConfig
-from bathy.python.bathy.image_processing.color_mapper import ColorMapper
+from bathy.config import ImageProcessingConfig
+from bathy.image_processing.color_mapper import ColorMapper
 from PIL import Image
 from skimage.color import rgb2lab
 from sklearn.cluster import KMeans
+from io import BytesIO
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -32,7 +33,7 @@ class ImageProcessor:
 
     def load_image(
         self,
-        image_path: Union[str, Path],
+        image_path_or_data: Union[str, Path, bytes],
     ) -> np.ndarray:
         """
         Load an image file and return as RGB array with full resolution control.
@@ -40,43 +41,46 @@ class ImageProcessor:
         Args:
             image_path: Path to image file
             preserve_full_resolution: If True, loads at original resolution
-            max_dimension: If specified, resize image so largest dimension is this size
 
         Returns:
             RGB image array with shape (height, width, 3)
         """
-        with tqdm(
-            desc=f"Loading image {Path(image_path).name}", total=1, unit="file"
-        ) as pbar:
-            # Prevent PIL from automatically limiting large images
-            if self.config.preserve_full_resolution:
-                # Remove PIL's default size limit
-                Image.MAX_IMAGE_PIXELS = None
+        if self.config.preserve_full_resolution:
+            # Remove PIL's default size limit
+            Image.MAX_IMAGE_PIXELS = None
+        open_path: BytesIO | str | Path
 
-            with Image.open(image_path) as img:
-                # Log original dimensions
-                self.logger.info(
-                    f"Original image size: {img.size[0]}x{img.size[1]} pixels"
-                )
+        if isinstance(image_path_or_data, bytes):
+            logger.info(f"Parsing {len(image_path_or_data)} bytes of image data")
+            open_path = BytesIO(image_path_or_data)
+            open_path.seek(0)  # Ensure BytesIO is at position 0 for PIL to read
+            logger.debug(f"BytesIO position after seek: {open_path.tell()}")
 
-                # Resize if max_dimension is specified
-                if self.config.max_dimension is not None:
-                    current_max = max(img.size)
-                    if current_max > self.config.max_dimension:
-                        ratio = self.config.max_dimension / current_max
-                        new_size = (int(img.size[0] * ratio), int(img.size[1] * ratio))
-                        img = img.resize(new_size, Image.Resampling.LANCZOS)
-                        self.logger.info(
-                            f"Resized to: {new_size[0]}x{new_size[1]} pixels"
-                        )
+        else:
+            image_path_str = str(image_path_or_data)
+            logger.info(f"Loading image from path: {image_path_str}")
+            path_obj = (
+                Path(image_path_or_data)
+                if isinstance(image_path_or_data, str)
+                else image_path_or_data
+            )
+            if not path_obj.exists():
+                logger.error(f"Image file does not exist: {path_obj}")
+                raise FileNotFoundError(f"Image file not found: {path_obj}")
 
-                # Convert to RGB (handles RGBA, grayscale, etc.)
-                rgb_img = img.convert("RGB")
-                result = np.array(rgb_img)
+            file_size = path_obj.stat().st_size
+            logger.info(f"Image file size: {file_size} bytes")
+            open_path = image_path_or_data
 
-                self.logger.info(f"Loaded array shape: {result.shape}")
-                pbar.update(1)
-                return result
+        logger.debug("Attempting to open image with PIL...")
+        with Image.open(open_path) as img:
+            # Convert to RGB (handles RGBA, grayscale, etc.)
+            rgb_img = img.convert("RGB")
+            result = np.array(rgb_img)
+
+            self.logger.info(f"Loaded array shape: {result.shape}")
+
+        return result
 
     def process_image_to_heightmap(
         self,
@@ -309,46 +313,6 @@ class ImageProcessor:
         )
 
         return filled_heightmap
-
-    def process_image_file_to_heightmap(
-        self,
-        image_path: Union[str, Path],
-        color_map: Dict[str, Union[float, Dict]],
-        default_fuzziness: float = 10.0,
-        region: Optional[Tuple[int, int, int, int]] = None,
-        preserve_full_resolution: bool = True,
-        max_dimension: Optional[int] = None,
-        fill_nan_values: bool = False,
-        fill_max_iterations: int = 100,
-        fill_neighborhood_size: int = 1,
-    ) -> np.ndarray:
-        """
-        Load an image file and process it to create a heightmap.
-
-        Args:
-            image_path: Path to image file
-            color_map: Dictionary mapping hex colors to values/config
-            default_fuzziness: Default fuzziness for color matching
-            region: Optional (x_start, y_start, x_end, y_end) for sub-region
-            preserve_full_resolution: If True, loads at original resolution (default)
-            max_dimension: If specified, resize so largest dimension is this size
-            fill_nan_values: If True, iteratively fill NaN values with neighbor averages
-            fill_max_iterations: Maximum iterations for NaN filling
-            fill_neighborhood_size: Neighborhood size for filling (1=3x3, 2=5x5, etc.)
-
-        Returns:
-            2D heightmap array with float values (NaN for unmatched pixels, unless filled)
-        """
-        image = self.load_image(image_path, preserve_full_resolution, max_dimension)
-        return self.process_image_to_heightmap(
-            image,
-            color_map,
-            default_fuzziness,
-            region,
-            fill_nan_values,
-            fill_max_iterations,
-            fill_neighborhood_size,
-        )
 
     def get_image_info(self, image_path: Union[str, Path]) -> Dict:
         """

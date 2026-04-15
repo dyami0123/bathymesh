@@ -2,12 +2,12 @@ import logging
 
 import numpy as np
 import open3d as o3d
-from bathy.python.bathy.config import MeshGenerationConfig
-from bathy.python.bathy.contour_extractor import ContourExtractor
-from bathy.python.bathy.data_model import HeightmapData, MeshData, ThresholdSnapshot
-from bathy.python.bathy.mesh_combiner import MeshCombiner
-from bathy.python.bathy.mesh_post_processor import MeshPostProcessor
-from bathy.python.bathy.triangulator import Triangulator
+from bathy.config import MeshGenerationConfig
+from bathy.contour_extractor import ContourExtractor
+from bathy.data_model import HeightmapData, MeshData, ThresholdSnapshot
+from bathy.mesh_combiner import MeshCombiner
+from bathy.mesh_post_processor import MeshPostProcessor
+from bathy.triangulator import Triangulator
 from shapely.geometry import Polygon
 from tqdm import tqdm
 

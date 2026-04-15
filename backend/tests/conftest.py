@@ -1,4 +1,5 @@
 """Configuration and fixtures for pytest."""
+
 import pytest
 import numpy as np
 import tempfile
@@ -6,20 +7,24 @@ import shutil
 from pathlib import Path
 from typing import Iterator
 
-from bathymesh.utils import create_test_heightmap
-from bathymesh import MeshScaling
+# from bathy.utils import create_test_heightmap
+from bathy.config import MeshUnits
 
 
 @pytest.fixture
 def test_heightmap() -> np.ndarray:
     """Create a small test heightmap for testing."""
-    return create_test_heightmap(width=10, height=10, feature_scale=5.0, noise_level=0.05)
+    return create_test_heightmap(
+        width=10, height=10, feature_scale=5.0, noise_level=0.05
+    )
 
 
 @pytest.fixture
 def medium_heightmap() -> np.ndarray:
     """Create a medium-sized test heightmap for testing."""
-    return create_test_heightmap(width=30, height=30, feature_scale=8.0, noise_level=0.1)
+    return create_test_heightmap(
+        width=30, height=30, feature_scale=8.0, noise_level=0.1
+    )
 
 
 @pytest.fixture
@@ -44,15 +49,15 @@ def empty_heightmap() -> np.ndarray:
 
 
 @pytest.fixture
-def default_scaling() -> MeshScaling:
+def default_scaling() -> MeshUnits:
     """Default mesh scaling parameters."""
-    return MeshScaling(scale_x=1.0, scale_y=1.0, scale_z=1.0)
+    return MeshUnits(scale_x=1.0, scale_y=1.0, scale_z=1.0)
 
 
 @pytest.fixture
-def custom_scaling() -> MeshScaling:
+def custom_scaling() -> MeshUnits:
     """Custom mesh scaling parameters."""
-    return MeshScaling(scale_x=0.5, scale_y=0.5, scale_z=2.0)
+    return MeshUnits(scale_x=0.5, scale_y=0.5, scale_z=2.0)
 
 
 @pytest.fixture

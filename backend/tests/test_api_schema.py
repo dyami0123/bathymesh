@@ -6,7 +6,7 @@ are marked as required in output schemas for proper TypeScript generation.
 """
 
 import pytest
-from bathy.api.main import app, transform_schemas_for_output
+from bathy.api import app, transform_schemas_for_output
 from bathy.config import (
     MeshUnits,
     HeighmapProcessingConfig,

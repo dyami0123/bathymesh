@@ -204,6 +204,12 @@ class ImageProcessingConfig(OutputModel):
 
 
 class ProjectConfig(OutputModel):
+
+    project_id: str = Field(
+        default_factory=lambda: "default_project",
+        description="Unique identifier for the project",
+    )
+
     mesh_generation: MeshGenerationConfig = Field(
         default_factory=MeshGenerationConfig,
     )

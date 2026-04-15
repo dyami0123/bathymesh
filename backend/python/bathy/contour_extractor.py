@@ -6,7 +6,7 @@ from typing import List, Union
 
 import cv2
 import numpy as np
-from bathy.python.bathy.config import MeshGenerationConfig
+from bathy.config import MeshGenerationConfig
 from shapely.geometry import Polygon
 from shapely.ops import unary_union
 from skimage import measure

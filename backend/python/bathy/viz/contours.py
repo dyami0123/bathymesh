@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Union
 
 import geopandas as gpd
-from bathy.python.bathy.mesh_generator import MeshGenerator
+from bathy.mesh_generator import MeshGenerator
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure

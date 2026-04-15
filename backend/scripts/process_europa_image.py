@@ -1,9 +1,9 @@
 import logging
 from pathlib import Path
 
-from bathy.python.bathy.workflows.process_image import process_image
-from bathy.python.bathy.config import ImageProcessingConfig
-from bathy.python.bathy.viz.heightmap import heightmap_plot
+from bathy.workflows.process_image import process_image
+from bathy.config import ImageProcessingConfig
+from bathy.viz.heightmap import heightmap_plot
 
 if __name__ == "__main__":
     # Configure logging

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 import open3d as o3d
-from bathy.python.bathy.config import MeshGenerationConfig
+from bathy.config import MeshGenerationConfig
 
 logger = logging.getLogger(__name__)
 

@@ -1,38 +1,47 @@
 import logging
-from dataclasses import dataclass
-from typing import Optional
+from datetime import datetime
+from typing import Optional, Any, Literal, Union
 
 import numpy as np
-import open3d as o3d
-from bathy.python.bathy.config import MeshGenerationConfig
-from shapely.geometry import Polygon
+import open3d as o3d  # type: ignore
+from pydantic import BaseModel, ConfigDict
+from shapely.geometry import Polygon  # type: ignore
+
+from bathy.config import MeshGenerationConfig
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class RawHeightmapData:
+class HeightmapDataJson(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    data: list[list[float]]
+
+    @classmethod
+    def convert(cls, data: "HeightmapData") -> "HeightmapDataJson":
+        """Convert from API output format to internal format."""
+        return cls(data=data.data.tolist())
+
+
+class HeightmapData(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     data: np.ndarray
 
-    @property
-    def shape(self) -> tuple[int, int]:
-        return self.data.shape
-
-
-@dataclass
-class HeightmapData:
-    data: np.ndarray
     _post_processed: bool = False
+
+    @classmethod
+    def convert(cls, api_result: HeightmapDataJson) -> "HeightmapData":
+        """Convert from API output format to internal format."""
+        return cls(data=np.array(api_result.data, dtype=np.float32))
 
     def post_process(self, config: MeshGenerationConfig) -> None:
         """Apply scaling and offset to heightmap data."""
-
         if self._post_processed:
             logger.debug("Post-processing already applied, skipping")
             return
 
         logger.debug("Post-processing heightmap data with scaling and offset")
-
         self.data = (
             self.data * config.heightmap_processing.mesh_units.units_z
         ) + config.heightmap_processing.data_offset
@@ -44,17 +53,38 @@ class HeightmapData:
                 mode="constant",
                 constant_values=config.heightmap_processing.exterior_buffer_value,
             )
+        self._post_processed = True
 
 
-@dataclass
-class MeshData:
+class ImageData(BaseModel):
+    data: bytes
+    type: Literal["image/png", "image/jpeg", "image/tiff"]
+
+
+class JobStatus(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    jobId: str
+    status: Literal["pending", "processing", "completed", "failed"]
+    jobType: str
+    createdAt: datetime
+    startedAt: Union[datetime, None] = None
+    completedAt: Union[datetime, None] = None
+    error: Union[str, None] = None
+    result: Union[dict[str, Any], None] = None
+
+
+class MeshData(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     data: o3d.geometry.TriangleMesh
 
 
-@dataclass
-class ThresholdSnapshot:
+class ThresholdSnapshot(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     threshold: float
-    mesh: Optional[o3d.geometry.TriangleMesh] = None
-    contours: Optional[list[Polygon]] = None
-    vertices_2d: Optional[list[np.ndarray]] = None
-    triangles: Optional[list[np.ndarray]] = None
+    mesh: Union[o3d.geometry.TriangleMesh, None] = None
+    contours: Union[list[Polygon], None] = None
+    vertices_2d: Union[list[np.ndarray], None] = None
+    triangles: Union[list[np.ndarray], None] = None
