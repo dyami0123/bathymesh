@@ -596,7 +596,12 @@ export type SetProjectImageApiImageProjectIdPutData = {
          */
         project_id: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Update Config Colormap
+         */
+        update_config_colormap?: boolean;
+    };
     url: '/api/image/{project_id}';
 };
 

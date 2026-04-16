@@ -1,3 +1,5 @@
+import type { ImageData } from "@/client";
+
 export function extractImageBlob(payload: unknown): Blob | null {
     if (payload instanceof Blob || payload instanceof File) {
         return payload;
@@ -63,28 +65,22 @@ export async function buildImageColorArray(
     }
 }
 
-export async function getImageColorsFromAPIResult(
+export async function getImageColorsFromBlob(
     grid: number[][],
-    imageResult: PromiseSettledResult<{
-        data: unknown;
-        request: Request;
-        response: Response;
-    }>
+    imageData: ImageData
 ): Promise<Float32Array | null> {
     let imageColors: Float32Array | null = null;
-    if (imageResult.status === "fulfilled") {
-        try {
-            const imageBlob = extractImageBlob(imageResult.value.data);
-            if (imageBlob) {
-                imageColors = await buildImageColorArray(
-                    imageBlob,
-                    grid.length,
-                    grid[0]?.length ?? 0
-                );
-            }
-        } catch (imageError) {
-            console.warn("Failed to build image-based colors:", imageError);
+    try {
+        const imageBlob = extractImageBlob(imageData.data);
+        if (imageBlob) {
+            imageColors = await buildImageColorArray(
+                imageBlob,
+                grid.length,
+                grid[0]?.length ?? 0
+            );
         }
+    } catch (imageError) {
+        console.warn("Failed to build image-based colors:", imageError);
     }
 
     return imageColors;
