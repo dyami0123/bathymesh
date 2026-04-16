@@ -1,5 +1,28 @@
+from fastapi import FastAPI
 from bathy.config import OutputModel
 import inspect
+
+_cached_openapi = None
+
+
+def apply_openapi_overrides(app: FastAPI):
+
+    # Save original openapi method before override
+    _original_openapi_method = app.openapi
+
+    def custom_openapi():
+        """Generate OpenAPI schema with transformed defaults."""
+        global _cached_openapi
+        if _cached_openapi is not None:
+            return _cached_openapi
+
+        # Call original method to get base schema
+        openapi_schema = _original_openapi_method()
+        # Transform it
+        _cached_openapi = transform_schemas_for_output(openapi_schema)
+        return _cached_openapi
+
+    setattr(app, "openapi", custom_openapi)
 
 
 def transform_schemas_for_output(openapi_schema: dict) -> dict:

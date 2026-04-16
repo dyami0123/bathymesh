@@ -187,6 +187,7 @@ class ImageProcessingConfig(OutputModel):
     )
 
     color_map: OrderedDict = Field(
+        # TODO: add typing for dict format
         default_factory=lambda: OrderedDict(
             {
                 "#0000FF": {"value": -10.0, "fuzziness": 5.0},  # Deep water

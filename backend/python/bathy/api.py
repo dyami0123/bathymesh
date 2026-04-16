@@ -3,6 +3,7 @@ import os
 from copy import deepcopy
 from fastapi import FastAPI
 from fastapi import HTTPException
+from fastapi import UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from typing import cast
@@ -11,86 +12,19 @@ from bathy.database_interface import DatabaseInterface
 from bathy.data_model import HeightmapDataJson, HeightmapData, ImageData, JobStatus
 from bathy.workflows.job_submission_interface import submit_job, HeightmapParams
 from bathy.workflows.job_runner import job_runner
-from bathy.transform_openapi_schemas import transform_schemas_for_output
+from bathy.apply_openapi_overrides import apply_openapi_overrides
+from bathy.api_logs import configure_application_logging
+from bathy.image_processing.image_processor import ImageProcessor
+from collections import OrderedDict
 import logging
 
 logger = logging.getLogger(__name__)
 version: str = "0.1.0"
 
 
-def configure_application_logging() -> tuple[str, dict[str, object]]:
-    """Configure app logger levels and return uvicorn logging config."""
-    log_level_name = os.getenv("BATHYMESH_LOG_LEVEL", "INFO").upper()
-    level = getattr(logging, log_level_name, logging.INFO)
-
-    # Ensure app loggers are not filtered before uvicorn applies dictConfig.
-    logging.getLogger("bathy").setLevel(level)
-    logging.getLogger("bathy").propagate = False
-
-    uvicorn_log_config = _build_uvicorn_log_config(log_level_name)
-
-    if log_level_name not in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
-        return "info", uvicorn_log_config
-
-    return log_level_name.lower(), uvicorn_log_config
-
-
-def _build_uvicorn_log_config(log_level_name: str) -> dict[str, object]:
-    """Build uvicorn logging config with level, file, and line in each record."""
-    import uvicorn
-
-    config: dict[str, object] = deepcopy(uvicorn.config.LOGGING_CONFIG)
-
-    formatters = cast(dict[str, dict[str, object]], config["formatters"])
-    formatters["default"][
-        "fmt"
-    ] = "%(asctime)s | %(levelprefix)s | %(filename)s:%(lineno)d | %(message)s"
-    formatters["default"]["datefmt"] = "%H:%M:%S"
-    formatters["access"]["fmt"] = (
-        "%(asctime)s | %(levelprefix)s | %(filename)s:%(lineno)d | "
-        '%(client_addr)s - "%(request_line)s" %(status_code)s'
-    )
-    formatters["access"]["datefmt"] = "%H:%M:%S"
-
-    loggers = cast(dict[str, dict[str, object]], config["loggers"])
-    loggers["bathy"] = {
-        "handlers": ["default"],
-        "level": log_level_name,
-        "propagate": False,
-    }
-    loggers["uvicorn"]["level"] = log_level_name
-    loggers["uvicorn.error"]["level"] = log_level_name
-    loggers["uvicorn.access"]["level"] = log_level_name
-
-    config["root"] = {
-        "handlers": ["default"],
-        "level": log_level_name,
-    }
-
-    return config
-
-
 app = FastAPI(title="Bathymesh API", version=version)
 
-# Save original openapi method before override
-_original_openapi_method = app.openapi
-_cached_openapi = None
-
-
-def custom_openapi():
-    """Generate OpenAPI schema with transformed defaults."""
-    global _cached_openapi
-    if _cached_openapi is not None:
-        return _cached_openapi
-
-    # Call original method to get base schema
-    openapi_schema = _original_openapi_method()
-    # Transform it
-    _cached_openapi = transform_schemas_for_output(openapi_schema)
-    return _cached_openapi
-
-
-setattr(app, "openapi", custom_openapi)
+apply_openapi_overrides(app)
 
 app.add_middleware(
     CORSMiddleware,
@@ -148,8 +82,50 @@ async def validate_project_config(project_config: ProjectConfig) -> bool:
 
 
 @app.put("/api/image/{project_id}")
-async def set_project_image(project_id: str, image_data: ImageData) -> None:
+async def set_project_image(
+    project_id: str, file: UploadFile, update_config_colormap: bool = True
+) -> None:
+    # Read the uploaded file and validate type
+    file_content = await file.read()
+
+    # Map MIME types to the expected format
+    valid_types = {"image/png", "image/jpeg", "image/tiff"}
+    if file.content_type not in valid_types:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid image type. Allowed types: {', '.join(valid_types)}",
+        )
+
+    # Create ImageData object with the file content
+    image_data = ImageData(data=file_content, type=file.content_type)  # type: ignore
+
     DatabaseInterface.set_image_data(project_id=project_id, image_data=image_data)
+
+    if update_config_colormap:
+        config = DatabaseInterface.get_config(project_id=project_id)
+
+        sample_image_data = DatabaseInterface.get_image_data(
+            project_id=project_id, max_dimension=50
+        )
+        if sample_image_data is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No image found for project after explicit write: '{project_id}'",
+            )
+
+        image_processor = ImageProcessor(config=config.image_processing)
+        image_array = image_processor.load_image(sample_image_data.data)
+        sorted_colors = image_processor.extract_dominant_colors(image_array, n_colors=5)
+
+        new_colormap = OrderedDict(
+            {
+                color: {"fuzziness": 15, "value": i * 5 + 5}
+                for i, (color, _) in enumerate(sorted_colors)
+            }
+        )
+
+        config.image_processing.color_map = new_colormap
+        DatabaseInterface.set_config(project_id=project_id, project_config=config)
 
 
 @app.get("/api/image/{project_id}")

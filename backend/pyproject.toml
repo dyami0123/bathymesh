@@ -23,6 +23,7 @@ dependencies = [
     "pymeshlab>=2025.7",
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
+    "python-multipart>=0.0.26",
     "rich-pixels>=3.0.1",
     "scikit-image>=0.25.2",
     "shapely>=2.1.2",
@@ -36,7 +37,7 @@ dependencies = [
 ]
 
 [project.scripts]
-serve = "bathy.api.main:serve"
+serve = "bathy.api:serve"
 
 [build-system]
 requires = ["hatchling"]
@@ -51,7 +52,6 @@ packages = ["python/bathy"]
 
 [tool.uv.workspace]
 members = [
-    ".",
     ".",
 ]
 
