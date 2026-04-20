@@ -23,6 +23,13 @@ def test_mesh_units_all_fields_required():
     assert set(schema["required"]) == {"units_x", "units_y", "units_z"}
 
 
+def test_projects_endpoint_exists_in_openapi():
+    """API schema should expose the list-projects endpoint."""
+    spec = app.openapi()
+    assert "/api/projects" in spec["paths"]
+    assert "get" in spec["paths"]["/api/projects"]
+
+
 def test_heightmap_config_scalar_defaults_required():
     """Scalar default fields should be required."""
     spec = app.openapi()

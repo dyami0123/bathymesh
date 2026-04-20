@@ -66,6 +66,11 @@ async def defaults() -> ProjectConfig:
     return ProjectConfig()
 
 
+@app.get("/api/projects")
+async def list_projects() -> list[str]:
+    return DatabaseInterface.list_projects()
+
+
 @app.get("/api/config/{project_id}")
 async def get_project_config(project_id: str) -> ProjectConfig:
     return DatabaseInterface.get_config(project_id=project_id)

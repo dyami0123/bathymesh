@@ -29,6 +29,22 @@ def _convert_to_native_types(obj: Any) -> Any:
 
 class DatabaseInterfaceClass:
 
+    def list_projects(self) -> list[str]:
+        """List project IDs that have a config file in the data directory."""
+        if not data_dir.exists():
+            return []
+
+        project_ids: list[str] = []
+        for path in data_dir.iterdir():
+            if not path.is_dir():
+                continue
+
+            config_path = path / f"{path.name}_config.yaml"
+            if config_path.exists():
+                project_ids.append(path.name)
+
+        return sorted(project_ids)
+
     def get_config(self, project_id: str) -> ProjectConfig:
         logger.debug(f"Getting config for project: {project_id}")
         config_path = data_dir / project_id / f"{project_id}_config.yaml"
