@@ -4,16 +4,30 @@ import type { Grid, GridStats } from "@/data_processing";
 import { buildSurfaceGeometry } from "@/data_processing/buildSurfaceGeometry";
 import { useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
+import type { ThreeEvent } from "@react-three/fiber";
 const SURFACE_MAX_HEIGHT = 24;
 
 export function SurfaceMesh({
     data,
     activeColors,
     stats,
+    onPickColor,
+    isPickingActive = false,
+    onHover,
+    onHoverEnd,
 }: {
     data: Grid;
     activeColors: Float32Array;
     stats: GridStats;
+    onPickColor?: (row: number, col: number) => void;
+    isPickingActive?: boolean;
+    onHover?: (
+        row: number,
+        col: number,
+        clientX: number,
+        clientY: number
+    ) => void;
+    onHoverEnd?: () => void;
 }) {
     const geometry = useMemo(
         () => buildSurfaceGeometry(data, stats, SURFACE_MAX_HEIGHT),
@@ -39,8 +53,94 @@ export function SurfaceMesh({
         };
     }, [geometry]);
 
+    const resolveGridCoords = (
+        event: ThreeEvent<MouseEvent> | ThreeEvent<PointerEvent>
+    ): { row: number; col: number } | null => {
+        const face = event.face;
+        if (!face) return null;
+
+        const positionAttr = geometry.attributes
+            .position as THREE.BufferAttribute;
+        const candidates = [face.a, face.b, face.c];
+        const point = event.point;
+        const worldMatrix = event.object.matrixWorld;
+
+        let closestIndex = candidates[0]!;
+        let closestDist = Infinity;
+        const tempVec = new THREE.Vector3();
+
+        for (const idx of candidates) {
+            tempVec.fromBufferAttribute(positionAttr, idx);
+            tempVec.applyMatrix4(worldMatrix);
+            const dist = tempVec.distanceTo(point);
+            if (dist < closestDist) {
+                closestDist = dist;
+                closestIndex = idx;
+            }
+        }
+
+        const cols = data[0]?.length ?? 0;
+        const row = Math.floor(closestIndex / cols);
+        const col = closestIndex % cols;
+
+        if (row >= 0 && row < data.length && col >= 0 && col < cols) {
+            return { row, col };
+        }
+        return null;
+    };
+
+    const handleClick = (event: ThreeEvent<MouseEvent>) => {
+        console.debug("[color-pick] SurfaceMesh clicked", {
+            hasCallback: !!onPickColor,
+            face: event.face
+                ? { a: event.face.a, b: event.face.b, c: event.face.c }
+                : null,
+            point: event.point.toArray(),
+        });
+        if (!onPickColor) return;
+
+        const coords = resolveGridCoords(event);
+        if (!coords) return;
+
+        console.debug("[color-pick] resolved grid coords", {
+            row: coords.row,
+            col: coords.col,
+            gridRows: data.length,
+            gridCols: data[0]?.length ?? 0,
+        });
+
+        event.stopPropagation();
+        onPickColor(coords.row, coords.col);
+    };
+
+    const handlePointerMove = (event: ThreeEvent<PointerEvent>) => {
+        if (!isPickingActive || !onHover) return;
+        const coords = resolveGridCoords(event);
+        if (coords) {
+            onHover(
+                coords.row,
+                coords.col,
+                event.nativeEvent.clientX,
+                event.nativeEvent.clientY
+            );
+        }
+    };
+
+    const handlePointerLeave = () => {
+        if (isPickingActive) {
+            onHoverEnd?.();
+        }
+    };
+
     return (
-        <mesh geometry={geometry} castShadow receiveShadow>
+        <mesh
+            geometry={geometry}
+            castShadow
+            receiveShadow
+            onClick={handleClick}
+            onPointerMove={handlePointerMove}
+            onPointerLeave={handlePointerLeave}
+        >
             <meshStandardMaterial
                 vertexColors
                 roughness={0.9}

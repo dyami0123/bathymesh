@@ -54,6 +54,8 @@ export function HeightmapViewer({
     refreshSignal,
     loading,
     setLoading,
+    onPickColor,
+    isPickingColor = false,
 }: {
     activeImageData: ImageData | null;
     setActiveImageData: (data: ImageData) => void;
@@ -62,6 +64,8 @@ export function HeightmapViewer({
     refreshSignal: number;
     loading: boolean;
     setLoading: (loading: boolean) => void;
+    onPickColor?: (hexColor: string) => void;
+    isPickingColor?: boolean;
 }) {
     const project = useProject();
 
@@ -294,6 +298,70 @@ export function HeightmapViewer({
         return surfaceData.heightColors;
     }, [colorMode, surfaceData]);
 
+    const handlePickColor = useCallback(
+        (row: number, col: number) => {
+            console.debug("[color-pick] handlePickColor", {
+                row,
+                col,
+                hasCallback: !!onPickColor,
+                hasImageColors: !!surfaceData?.imageColors,
+                imageColorsLength: surfaceData?.imageColors?.length,
+            });
+            if (!onPickColor || !surfaceData?.imageColors) return;
+            const cols = surfaceData.grid[0]?.length ?? 0;
+            const idx = (row * cols + col) * 3;
+            const r = Math.round((surfaceData.imageColors[idx + 0] ?? 0) * 255);
+            const g = Math.round((surfaceData.imageColors[idx + 1] ?? 0) * 255);
+            const b = Math.round((surfaceData.imageColors[idx + 2] ?? 0) * 255);
+            const hex =
+                "#" +
+                [r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("");
+            console.debug("[color-pick] resolved color", { idx, r, g, b, hex });
+            onPickColor(hex);
+        },
+        [onPickColor, surfaceData]
+    );
+
+    const [hoverInfo, setHoverInfo] = useState<{
+        color: string;
+        x: number;
+        y: number;
+    } | null>(null);
+
+    const resolveHexAt = useCallback(
+        (row: number, col: number): string | null => {
+            if (!surfaceData?.imageColors) return null;
+            const cols = surfaceData.grid[0]?.length ?? 0;
+            const idx = (row * cols + col) * 3;
+            const r = Math.round((surfaceData.imageColors[idx] ?? 0) * 255);
+            const g = Math.round((surfaceData.imageColors[idx + 1] ?? 0) * 255);
+            const b = Math.round((surfaceData.imageColors[idx + 2] ?? 0) * 255);
+            return (
+                "#" +
+                [r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("")
+            );
+        },
+        [surfaceData]
+    );
+
+    const handleHover = useCallback(
+        (row: number, col: number, clientX: number, clientY: number) => {
+            const hex = resolveHexAt(row, col);
+            if (hex) {
+                setHoverInfo({ color: hex, x: clientX, y: clientY });
+            }
+        },
+        [resolveHexAt]
+    );
+
+    const handleHoverEnd = useCallback(() => setHoverInfo(null), []);
+
+    useEffect(() => {
+        if (!isPickingColor) {
+            setHoverInfo(null);
+        }
+    }, [isPickingColor]);
+
     let mainCanvas = null;
 
     if (loading) {
@@ -315,7 +383,10 @@ export function HeightmapViewer({
         );
     } else {
         mainCanvas = (
-            <div className="relative h-[70vh] w-full overflow-hidden rounded-lg bg-white">
+            <div
+                className="relative h-[70vh] w-full overflow-hidden rounded-lg bg-white"
+                style={isPickingColor ? { cursor: "crosshair" } : undefined}
+            >
                 <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-full bg-white/92 p-1 shadow-lg backdrop-blur">
                     <button
                         type="button"
@@ -378,12 +449,35 @@ export function HeightmapViewer({
                         data={surfaceData.grid}
                         stats={surfaceData.stats}
                         activeColors={activeColors}
+                        onPickColor={onPickColor ? handlePickColor : undefined}
+                        isPickingActive={isPickingColor}
+                        onHover={handleHover}
+                        onHoverEnd={handleHoverEnd}
                     />
                     <CameraRig
                         data={surfaceData.grid}
                         stats={surfaceData.stats}
                     />
                 </Canvas>
+
+                {isPickingColor && hoverInfo && (
+                    <div
+                        style={{
+                            position: "fixed",
+                            left: hoverInfo.x + 16,
+                            top: hoverInfo.y - 12,
+                            width: 24,
+                            height: 24,
+                            borderRadius: "50%",
+                            backgroundColor: hoverInfo.color,
+                            border: "2px solid white",
+                            boxShadow:
+                                "0 0 0 1px rgba(0,0,0,0.25), 0 2px 4px rgba(0,0,0,0.15)",
+                            pointerEvents: "none",
+                            zIndex: 50,
+                        }}
+                    />
+                )}
             </div>
         );
     }

@@ -1,10 +1,11 @@
 import { useState, useRef } from "react";
-import { useProject } from "@/state/projectContext";
+import { useProject, useProjectDispatch } from "@/state/projectContext";
 import { Spinner } from "./Spinner";
 import { blockingApiCall } from "@/blockingApiCall";
 import { PREVIEW_DIM } from "./HeightmapViewer";
 import {
     calculateProjectHeightmapApiHeightmapProjectIdPost,
+    getProjectConfigApiConfigProjectIdGet,
     getProjectHeightmapApiHeightmapProjectIdGet,
     getProjectImageApiImageProjectIdGet,
 } from "@/client";
@@ -53,6 +54,7 @@ export function ImageUpload({
     onUploaded: () => void;
 }) {
     const project = useProject();
+    const dispatch = useProjectDispatch();
     const [uploadState, setUploadState] = useState<UploadState>("idle");
     const [errorMessage, setErrorMessage] = useState<string>("");
     const [fileName, setFileName] = useState<string>("");
@@ -115,18 +117,23 @@ export function ImageUpload({
                 },
             });
 
-            const [imageResult, heightmapResult] = await Promise.all([
-                getProjectImageApiImageProjectIdGet({
-                    path: { project_id: project.project_id },
-                    throwOnError: true,
-                    query: { max_dimension: PREVIEW_DIM },
-                }),
-                getProjectHeightmapApiHeightmapProjectIdGet({
-                    path: { project_id: project.project_id },
-                    throwOnError: true,
-                    query: { is_preview: true },
-                }),
-            ]);
+            const [imageResult, heightmapResult, projectConfigResult] =
+                await Promise.all([
+                    getProjectImageApiImageProjectIdGet({
+                        path: { project_id: project.project_id },
+                        throwOnError: true,
+                        query: { max_dimension: PREVIEW_DIM },
+                    }),
+                    getProjectHeightmapApiHeightmapProjectIdGet({
+                        path: { project_id: project.project_id },
+                        throwOnError: true,
+                        query: { is_preview: true },
+                    }),
+                    getProjectConfigApiConfigProjectIdGet({
+                        path: { project_id: project.project_id },
+                        throwOnError: true,
+                    }),
+                ]);
 
             const normalizedImage = toImageData(imageResult.data);
             if (!normalizedImage) {
@@ -140,6 +147,17 @@ export function ImageUpload({
                     "Failed to load heightmap data after upload. Please refresh and try again."
                 );
             }
+
+            if (!projectConfigResult.data) {
+                throw new Error(
+                    "Failed to refresh project config after upload. Please refresh and try again."
+                );
+            }
+
+            dispatch({
+                type: "set_project",
+                payload: projectConfigResult.data,
+            });
 
             setActiveImageData(normalizedImage);
             setActiveHeightmapData(heightmapResult.data as HeightmapDataJson);

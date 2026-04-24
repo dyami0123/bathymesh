@@ -5,6 +5,16 @@ export type ClientOptions = {
 };
 
 /**
+ * Body_set_project_image_api_image__project_id__put
+ */
+export type BodySetProjectImageApiImageProjectIdPut = {
+    /**
+     * File
+     */
+    file: Blob | File;
+};
+
+/**
  * ContourExtractionConfig
  */
 export type ContourExtractionConfig = {
@@ -103,20 +113,6 @@ export type HeightmapParams = {
      * Max Dimension Override
      */
     max_dimension_override?: number | null;
-};
-
-/**
- * ImageData
- */
-export type ImageData = {
-    /**
-     * Data
-     */
-    data: Blob | File;
-    /**
-     * Type
-     */
-    type: 'image/png' | 'image/jpeg' | 'image/tiff';
 };
 
 /**
@@ -470,6 +466,24 @@ export type DefaultsApiConfigDefaultsGetResponses = {
 
 export type DefaultsApiConfigDefaultsGetResponse = DefaultsApiConfigDefaultsGetResponses[keyof DefaultsApiConfigDefaultsGetResponses];
 
+export type ListProjectsApiProjectsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/projects';
+};
+
+export type ListProjectsApiProjectsGetResponses = {
+    /**
+     * Response List Projects Api Projects Get
+     *
+     * Successful Response
+     */
+    200: Array<string>;
+};
+
+export type ListProjectsApiProjectsGetResponse = ListProjectsApiProjectsGetResponses[keyof ListProjectsApiProjectsGetResponses];
+
 export type GetProjectConfigApiConfigProjectIdGetData = {
     body?: never;
     path: {
@@ -589,7 +603,7 @@ export type GetProjectImageApiImageProjectIdGetResponses = {
 };
 
 export type SetProjectImageApiImageProjectIdPutData = {
-    body: ImageData;
+    body: BodySetProjectImageApiImageProjectIdPut;
     path: {
         /**
          * Project Id
