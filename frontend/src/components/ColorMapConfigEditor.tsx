@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useProject, useProjectDispatch } from "@/state/projectContext";
+import {
+    useColorPicker,
+    useColorPickerDispatch,
+} from "@/state/colorPickerContext";
+import { useOnColorMapChanged } from "@/state/ColormapStateProvider";
 import { ColorPicker } from "./ColorPicker";
 
 type ColorMapEntry = {
@@ -45,19 +50,13 @@ function parseColorMap(
         .sort((a, b) => b.entry.value - a.entry.value);
 }
 
-export function ColorMapConfigEditor({
-    onColorMapChanged,
-    pickedColor,
-    onPickedColorConsumed,
-    onPickModeChanged,
-}: {
-    onColorMapChanged?: () => void;
-    pickedColor?: string | null;
-    onPickedColorConsumed?: () => void;
-    onPickModeChanged?: (active: boolean) => void;
-}) {
+export function ColorMapConfigEditor() {
     const project = useProject();
     const dispatch = useProjectDispatch();
+
+    const { pickedColor } = useColorPicker();
+    const colorPickerDispatch = useColorPickerDispatch();
+    const onColorMapChanged = useOnColorMapChanged();
 
     const [newColor, setNewColor] = useState("#2d7f5e");
     const [newValue, setNewValue] = useState(0);
@@ -69,8 +68,11 @@ export function ColorMapConfigEditor({
     const pickTargetRef = useRef<PickTarget | null>(null);
 
     useEffect(() => {
-        onPickModeChanged?.(pickTarget !== null);
-    }, [pickTarget, onPickModeChanged]);
+        colorPickerDispatch({
+            type: "set_picking",
+            value: pickTarget !== null,
+        });
+    }, [pickTarget, colorPickerDispatch]);
 
     const entries = useMemo(
         () =>
@@ -128,7 +130,7 @@ export function ColorMapConfigEditor({
                         oldColor: target.color,
                         newColor: pickedColor,
                     });
-                    onColorMapChanged?.();
+                    onColorMapChanged();
                 } else {
                     console.debug(
                         "[color-pick] Skipped: color already exists or unchanged"
@@ -139,9 +141,9 @@ export function ColorMapConfigEditor({
             }
             setPickTarget(null);
             pickTargetRef.current = null;
-            onPickedColorConsumed?.();
+            colorPickerDispatch({ type: "consume_picked_color" });
         }
-    }, [pickedColor, onPickedColorConsumed]);
+    }, [pickedColor, colorPickerDispatch]);
 
     const addEntry = () => {
         if (hasExistingColor(newColor)) {
@@ -155,7 +157,7 @@ export function ColorMapConfigEditor({
             value: newValue,
             fuzziness: newFuzziness,
         });
-        onColorMapChanged?.();
+        onColorMapChanged();
         setAddError(null);
     };
 
@@ -202,7 +204,7 @@ export function ColorMapConfigEditor({
                                             newColor: nextColor,
                                         });
                                     }}
-                                    onCommit={() => onColorMapChanged?.()}
+                                    onCommit={() => onColorMapChanged()}
                                 />
                                 <button
                                     type="button"
@@ -241,7 +243,7 @@ export function ColorMapConfigEditor({
                                         value: Number(event.target.value),
                                         fuzziness: entry.fuzziness,
                                     });
-                                    onColorMapChanged?.();
+                                    onColorMapChanged();
                                 }}
                                 step={0.01}
                                 className="w-full rounded border border-gray-300 px-2 py-1 text-sm text-black"
@@ -262,7 +264,7 @@ export function ColorMapConfigEditor({
                                         value: entry.value,
                                         fuzziness: Number(event.target.value),
                                     });
-                                    onColorMapChanged?.();
+                                    onColorMapChanged();
                                 }}
                                 step={0.1}
                                 min={0}
@@ -278,7 +280,7 @@ export function ColorMapConfigEditor({
                                         type: "remove_color_map",
                                         color,
                                     });
-                                    onColorMapChanged?.();
+                                    onColorMapChanged();
                                 }}
                                 className="w-full rounded border border-red-200 bg-red-50 px-3 py-1 text-sm font-medium text-red-700 hover:bg-red-100 md:w-auto"
                             >

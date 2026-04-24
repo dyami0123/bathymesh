@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { useProject, useProjectDispatch } from "@/state/projectContext";
+import { useViewerDispatch } from "@/state/viewerContext";
 import { Spinner } from "./Spinner";
 import { blockingApiCall } from "@/blockingApiCall";
 import { PREVIEW_DIM } from "./HeightmapViewer";
@@ -42,19 +43,10 @@ function toImageData(payload: unknown): ImageData | null {
     return null;
 }
 
-export function ImageUpload({
-    setActiveImageData,
-    setActiveHeightmapData,
-    setHeightmapViewerLoading,
-    onUploaded,
-}: {
-    setActiveImageData: (data: ImageData) => void;
-    setActiveHeightmapData: (data: HeightmapDataJson) => void;
-    setHeightmapViewerLoading: (loading: boolean) => void;
-    onUploaded: () => void;
-}) {
+export function ImageUpload() {
     const project = useProject();
     const dispatch = useProjectDispatch();
+    const viewerDispatch = useViewerDispatch();
     const [uploadState, setUploadState] = useState<UploadState>("idle");
     const [errorMessage, setErrorMessage] = useState<string>("");
     const [fileName, setFileName] = useState<string>("");
@@ -84,7 +76,7 @@ export function ImageUpload({
 
     const uploadImage = async (file: File) => {
         setUploadState("uploading");
-        setHeightmapViewerLoading(true);
+        viewerDispatch({ type: "set_loading", value: true });
 
         try {
             const formData = new FormData();
@@ -159,9 +151,12 @@ export function ImageUpload({
                 payload: projectConfigResult.data,
             });
 
-            setActiveImageData(normalizedImage);
-            setActiveHeightmapData(heightmapResult.data as HeightmapDataJson);
-            onUploaded();
+            viewerDispatch({ type: "set_image", data: normalizedImage });
+            viewerDispatch({
+                type: "set_heightmap",
+                data: heightmapResult.data as HeightmapDataJson,
+            });
+            viewerDispatch({ type: "refresh" });
 
             // Reset the file input
             if (fileInputRef.current) {
@@ -180,7 +175,7 @@ export function ImageUpload({
                     ? error.message
                     : "Failed to upload image"
             );
-            setHeightmapViewerLoading(false);
+            viewerDispatch({ type: "set_loading", value: false });
         }
     };
 

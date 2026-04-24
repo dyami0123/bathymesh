@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { useProject } from "@/state/projectContext";
+import { useViewer, useViewerDispatch } from "@/state/viewerContext";
+import {
+    useColorPicker,
+    useColorPickerDispatch,
+} from "@/state/colorPickerContext";
 import {
     getProjectHeightmapApiHeightmapProjectIdGet,
     getProjectImageApiImageProjectIdGet,
@@ -46,28 +51,33 @@ function normalizeImagePayload(payload: ActiveImagePayload): ImageData | null {
     return payload;
 }
 
-export function HeightmapViewer({
-    activeImageData,
-    setActiveImageData,
-    activeHeightmapData,
-    setActiveHeightmapData,
-    refreshSignal,
-    loading,
-    setLoading,
-    onPickColor,
-    isPickingColor = false,
-}: {
-    activeImageData: ImageData | null;
-    setActiveImageData: (data: ImageData) => void;
-    activeHeightmapData: HeightmapDataJson | null;
-    setActiveHeightmapData: (data: HeightmapDataJson) => void;
-    refreshSignal: number;
-    loading: boolean;
-    setLoading: (loading: boolean) => void;
-    onPickColor?: (hexColor: string) => void;
-    isPickingColor?: boolean;
-}) {
+export function HeightmapViewer() {
     const project = useProject();
+    const {
+        activeImageData,
+        activeHeightmapData,
+        refreshSignal,
+        isLoading: loading,
+    } = useViewer();
+    const viewerDispatch = useViewerDispatch();
+    const { isPickingColor } = useColorPicker();
+    const colorPickerDispatch = useColorPickerDispatch();
+
+    const setLoading = useCallback(
+        (value: boolean) => viewerDispatch({ type: "set_loading", value }),
+        [viewerDispatch]
+    );
+
+    const setActiveImageData = useCallback(
+        (data: ImageData) => viewerDispatch({ type: "set_image", data }),
+        [viewerDispatch]
+    );
+
+    const setActiveHeightmapData = useCallback(
+        (data: HeightmapDataJson) =>
+            viewerDispatch({ type: "set_heightmap", data }),
+        [viewerDispatch]
+    );
 
     const [surfaceData, setSurfaceData] = useState<SurfaceData | null>(null);
     const [refreshing, setRefreshing] = useState(false);
@@ -303,11 +313,10 @@ export function HeightmapViewer({
             console.debug("[color-pick] handlePickColor", {
                 row,
                 col,
-                hasCallback: !!onPickColor,
                 hasImageColors: !!surfaceData?.imageColors,
                 imageColorsLength: surfaceData?.imageColors?.length,
             });
-            if (!onPickColor || !surfaceData?.imageColors) return;
+            if (!surfaceData?.imageColors) return;
             const cols = surfaceData.grid[0]?.length ?? 0;
             const idx = (row * cols + col) * 3;
             const r = Math.round((surfaceData.imageColors[idx + 0] ?? 0) * 255);
@@ -317,9 +326,9 @@ export function HeightmapViewer({
                 "#" +
                 [r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("");
             console.debug("[color-pick] resolved color", { idx, r, g, b, hex });
-            onPickColor(hex);
+            colorPickerDispatch({ type: "pick_color", hex });
         },
-        [onPickColor, surfaceData]
+        [colorPickerDispatch, surfaceData]
     );
 
     const [hoverInfo, setHoverInfo] = useState<{
@@ -449,7 +458,7 @@ export function HeightmapViewer({
                         data={surfaceData.grid}
                         stats={surfaceData.stats}
                         activeColors={activeColors}
-                        onPickColor={onPickColor ? handlePickColor : undefined}
+                        onPickColor={handlePickColor}
                         isPickingActive={isPickingColor}
                         onHover={handleHover}
                         onHoverEnd={handleHoverEnd}
