@@ -11,6 +11,10 @@ import {
     getProjectImageApiImageProjectIdGet,
 } from "@/client";
 import type { ImageData, HeightmapDataJson } from "@/client";
+import { Card } from "./ui/Card";
+import { Heading } from "./ui/Heading";
+import { Badge } from "./ui/Badge";
+import { fileInput } from "./ui/styles";
 
 type UploadState = "idle" | "uploading" | "success" | "error";
 
@@ -180,10 +184,8 @@ export function ImageUpload() {
     };
 
     return (
-        <div className="w-full rounded-lg border border-gray-300 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">
-                Upload Image
-            </h2>
+        <Card className="w-full p-6">
+            <Heading className="mb-4">Upload Image</Heading>
 
             <div className="space-y-4">
                 {/* File input */}
@@ -194,7 +196,7 @@ export function ImageUpload() {
                         accept={ALLOWED_TYPES.join(",")}
                         onChange={handleFileChange}
                         disabled={uploadState === "uploading"}
-                        className="block w-full cursor-pointer rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 file:mr-4 file:rounded file:border-0 file:bg-blue-500 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                        className={fileInput()}
                     />
                 </div>
 
@@ -215,28 +217,24 @@ export function ImageUpload() {
                 )}
 
                 {uploadState === "success" && (
-                    <div className="rounded-lg bg-green-50 p-3" role="status">
-                        <p className="text-sm font-medium text-green-800">
-                            ✓ Image uploaded successfully
-                        </p>
-                    </div>
+                    <Badge intent="success" role="status">
+                        ✓ Image uploaded successfully
+                    </Badge>
                 )}
 
                 {uploadState === "error" && (
-                    <div className="rounded-lg bg-red-50 p-3" role="alert">
-                        <p className="text-sm font-medium text-red-800">
-                            ✗ {errorMessage}
-                        </p>
-                    </div>
+                    <Badge intent="error" role="alert">
+                        ✗ {errorMessage}
+                    </Badge>
                 )}
 
                 {/* Supported formats info */}
-                <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs text-gray-600">
+                <Badge intent="muted">
+                    <p className="text-xs">
                         Supported formats: PNG, JPEG, TIFF
                     </p>
-                </div>
+                </Badge>
             </div>
-        </div>
+        </Card>
     );
 }

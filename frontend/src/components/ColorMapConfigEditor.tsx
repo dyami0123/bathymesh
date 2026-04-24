@@ -6,6 +6,11 @@ import {
 } from "@/state/colorPickerContext";
 import { useOnColorMapChanged } from "@/state/ColormapStateProvider";
 import { ColorPicker } from "./ColorPicker";
+import { Card } from "./ui/Card";
+import { Heading } from "./ui/Heading";
+import { Button } from "./ui/Button";
+import { cn } from "@/lib/cn";
+import { label as labelStyle, input, button as buttonStyle } from "./ui/styles";
 
 type ColorMapEntry = {
     value: number;
@@ -162,11 +167,9 @@ export function ColorMapConfigEditor() {
     };
 
     return (
-        <section className="rounded-lg border border-gray-300 bg-white p-4 shadow-sm">
+        <Card as="section">
             <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">
-                    Colormap Editor
-                </h2>
+                <Heading>Colormap Editor</Heading>
                 <span className="text-xs text-gray-500">
                     Changes sync to backend automatically
                 </span>
@@ -185,7 +188,9 @@ export function ColorMapConfigEditor() {
                         className="grid grid-cols-1 gap-2 rounded border border-gray-200 p-3 md:grid-cols-[1fr_1fr_1fr_auto] md:items-center"
                     >
                         <div>
-                            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                            <label
+                                className={labelStyle({ variant: "uppercase" })}
+                            >
                                 Color
                             </label>
                             <div className="flex items-center gap-1">
@@ -214,14 +219,15 @@ export function ColorMapConfigEditor() {
                                             color,
                                         })
                                     }
-                                    className={`self-end rounded border px-2 py-1.5 text-xs font-medium transition-colors ${
+                                    className={cn(
+                                        "self-end rounded border px-2 py-1.5 text-xs font-medium transition-colors",
                                         isPickTargetActive({
                                             type: "existing",
                                             color,
                                         })
                                             ? "border-blue-500 bg-blue-100 text-blue-700"
                                             : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
-                                    }`}
+                                    )}
                                     title="Pick color from mesh"
                                 >
                                     Pick
@@ -230,7 +236,9 @@ export function ColorMapConfigEditor() {
                         </div>
 
                         <div>
-                            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                            <label
+                                className={labelStyle({ variant: "uppercase" })}
+                            >
                                 Value
                             </label>
                             <input
@@ -246,12 +254,14 @@ export function ColorMapConfigEditor() {
                                     onColorMapChanged();
                                 }}
                                 step={0.01}
-                                className="w-full rounded border border-gray-300 px-2 py-1 text-sm text-black"
+                                className={input({ variant: "compact" })}
                             />
                         </div>
 
                         <div>
-                            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                            <label
+                                className={labelStyle({ variant: "uppercase" })}
+                            >
                                 Fuzziness
                             </label>
                             <input
@@ -268,7 +278,7 @@ export function ColorMapConfigEditor() {
                                 }}
                                 step={0.1}
                                 min={0}
-                                className="w-full rounded border border-gray-300 px-2 py-1 text-sm text-black"
+                                className={input({ variant: "compact" })}
                             />
                         </div>
 
@@ -282,7 +292,13 @@ export function ColorMapConfigEditor() {
                                     });
                                     onColorMapChanged();
                                 }}
-                                className="w-full rounded border border-red-200 bg-red-50 px-3 py-1 text-sm font-medium text-red-700 hover:bg-red-100 md:w-auto"
+                                className={cn(
+                                    buttonStyle({
+                                        intent: "danger",
+                                        shape: "compact",
+                                    }),
+                                    "md:w-auto"
+                                )}
                             >
                                 Remove
                             </button>
@@ -291,13 +307,13 @@ export function ColorMapConfigEditor() {
                 ))}
             </div>
 
-            <div className="mt-4 rounded border border-gray-200 bg-gray-50 p-3">
-                <h3 className="mb-2 text-sm font-semibold text-gray-900">
+            <Card variant="inset" className="mt-4 p-3">
+                <Heading level="subsection" as="h3" className="mb-2">
                     Add Color Mapping
-                </h3>
+                </Heading>
                 <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_1fr_auto] md:items-end">
                     <div>
-                        <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                        <label className={labelStyle({ variant: "uppercase" })}>
                             Color
                         </label>
                         <div className="flex items-center gap-1">
@@ -310,11 +326,12 @@ export function ColorMapConfigEditor() {
                                 onClick={() =>
                                     togglePickTarget({ type: "new" })
                                 }
-                                className={`self-end rounded border px-2 py-1.5 text-xs font-medium transition-colors ${
+                                className={cn(
+                                    "self-end rounded border px-2 py-1.5 text-xs font-medium transition-colors",
                                     isPickTargetActive({ type: "new" })
                                         ? "border-blue-500 bg-blue-100 text-blue-700"
                                         : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
-                                }`}
+                                )}
                                 title="Pick color from mesh"
                             >
                                 Pick
@@ -323,7 +340,7 @@ export function ColorMapConfigEditor() {
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                        <label className={labelStyle({ variant: "uppercase" })}>
                             Value
                         </label>
                         <input
@@ -333,12 +350,12 @@ export function ColorMapConfigEditor() {
                                 setNewValue(Number(event.target.value))
                             }
                             step={0.01}
-                            className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                            className={input({ variant: "compact" })}
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                        <label className={labelStyle({ variant: "uppercase" })}>
                             Fuzziness
                         </label>
                         <input
@@ -349,22 +366,16 @@ export function ColorMapConfigEditor() {
                             }
                             step={0.1}
                             min={0}
-                            className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                            className={input({ variant: "compact" })}
                         />
                     </div>
 
-                    <button
-                        type="button"
-                        onClick={addEntry}
-                        className="rounded bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800"
-                    >
-                        Add
-                    </button>
+                    <Button onClick={addEntry}>Add</Button>
                 </div>
                 {addError ? (
                     <p className="mt-2 text-sm text-red-600">{addError}</p>
                 ) : null}
-            </div>
-        </section>
+            </Card>
+        </Card>
     );
 }

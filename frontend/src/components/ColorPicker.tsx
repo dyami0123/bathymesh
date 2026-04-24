@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { colorInput, input } from "@/components/ui/styles";
+import { cn } from "@/lib/cn";
 
 function normalizeHexColor(value: string): string | null {
     const input = value.trim().toLowerCase();
@@ -70,7 +72,7 @@ export function ColorPicker({
                 }}
                 onBlur={commitDraftColor}
                 disabled={disabled}
-                className="h-9 w-12 cursor-pointer rounded border border-gray-300 bg-white p-1 disabled:cursor-not-allowed disabled:opacity-60"
+                className={colorInput()}
                 aria-label="Pick color"
             />
             <input
@@ -90,7 +92,10 @@ export function ColorPicker({
                     }
                 }}
                 disabled={disabled}
-                className="w-24 rounded border border-gray-300 px-2 py-1 text-sm text-gray-900 disabled:cursor-not-allowed disabled:bg-gray-100"
+                className={cn(
+                    input({ variant: "compact", width: "fixed" }),
+                    "w-24"
+                )}
                 aria-label="Hex color"
             />
         </div>

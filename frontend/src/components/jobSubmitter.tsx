@@ -2,6 +2,8 @@ import { useProject } from "@/state/projectContext";
 import { useState, useEffect, useRef } from "react";
 import { getJobStatusApiJobsJobIdGet } from "@/client";
 import type { JobStatus } from "@/client";
+import { cn } from "@/lib/cn";
+import { card, button, select, badge } from "@/components/ui/styles";
 
 // type JobType = "calculate_heightmap" | "generate_mesh";
 
@@ -152,18 +154,13 @@ export function JobSubmitButton<const TJobType extends string, TBody>({
     }, [jobState.type === "polling" ? jobState.jobId : null]);
 
     return (
-        <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
-            <div style={{ marginBottom: "20px" }}>
+        <div className="p-5">
+            <div className="mb-5 flex items-center gap-3">
                 <strong>Execute Workflows:</strong> {project.project_id}
                 <select
                     value={jobType}
                     onChange={(e) => setJobtype(e.target.value as JobType)}
-                    style={{
-                        marginLeft: "10px",
-                        padding: "8px",
-                        fontSize: "16px",
-                        cursor: "pointer",
-                    }}
+                    className={cn(select(), "ml-2 w-auto")}
                 >
                     {jobTypes.map((type) => (
                         <option key={type} value={type}>
@@ -176,34 +173,20 @@ export function JobSubmitButton<const TJobType extends string, TBody>({
             {jobState.type === "idle" && (
                 <button
                     onClick={handleSubmitJob}
-                    style={{
-                        padding: "10px 20px",
-                        fontSize: "16px",
-                        cursor: "pointer",
-                        backgroundColor: "#4CAF50",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "4px",
-                    }}
+                    className={button({ intent: "primary" })}
                 >
                     Submit Job
                 </button>
             )}
 
             {jobState.type === "submitting" && (
-                <div style={{ color: "#666" }}>
+                <div className="text-gray-500">
                     <p>⏳ Submitting job...</p>
                 </div>
             )}
 
             {jobState.type === "polling" && (
-                <div
-                    style={{
-                        marginTop: "20px",
-                        padding: "15px",
-                        borderRadius: "4px",
-                    }}
-                >
+                <div className={cn(card({ variant: "inset" }), "mt-5")}>
                     <p>
                         <strong>Running Job ID:</strong> {jobState.jobId}
                     </p>
@@ -211,23 +194,16 @@ export function JobSubmitButton<const TJobType extends string, TBody>({
             )}
 
             {lastJob && (
-                <div
-                    style={{
-                        marginTop: "20px",
-                        padding: "15px",
-                        borderRadius: "4px",
-                        border: "1px solid #ddd",
-                    }}
-                >
+                <div className={cn(card(), "mt-5")}>
                     <p>
                         <strong>Last Job:</strong>{" "}
-                        <pre style={{ fontSize: "12px", overflow: "auto" }}>
+                        <pre className="overflow-auto text-xs">
                             {JSON.stringify(lastJob, null, 2)}
                             {JSON.stringify(jobState, null, 2)}
                         </pre>
                     </p>
                     {lastJob.type === "error" && (
-                        <p style={{ color: "#c62828" }}>
+                        <p className="text-sm text-red-700">
                             Error: {lastJob.message}
                         </p>
                     )}
@@ -235,28 +211,13 @@ export function JobSubmitButton<const TJobType extends string, TBody>({
             )}
 
             {lastJob && lastJob.type === "error" && (
-                <div
-                    style={{
-                        marginTop: "20px",
-                        padding: "15px",
-                        backgroundColor: "#ffebee",
-                        color: "#c62828",
-                        borderRadius: "4px",
-                    }}
-                >
+                <div className={cn(badge({ intent: "error" }), "mt-5")}>
                     <p>❌ {lastJob.message}</p>
                 </div>
             )}
 
             {lastJob && lastJob.type == "completed" && (
-                <div
-                    style={{
-                        marginTop: "10px",
-                        padding: "8px 16px",
-                        cursor: "pointer",
-                        borderRadius: "4px",
-                    }}
-                >
+                <div className={cn(card({ variant: "inset" }), "mt-3")}>
                     Last Job Status: {lastJob.jobStatus.status} (Type:{" "}
                     {lastJob.job_type})
                 </div>

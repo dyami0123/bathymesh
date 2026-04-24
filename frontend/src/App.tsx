@@ -10,6 +10,8 @@ import {
     useProjectOptional,
     useProjectSelectionState,
 } from "./state/projectContext";
+import { Card } from "./components/ui/Card";
+import { label, select } from "./components/ui/styles";
 
 export function App() {
     return (
@@ -43,10 +45,10 @@ function ProjectAppShell() {
             <ColormapStateProvider>
                 <div className="min-h-screen w-full p-4 lg:p-6">
                     <div className="flex w-full flex-col gap-4">
-                        <div className="rounded-lg border border-gray-300 bg-white p-4 shadow-sm">
+                        <Card>
                             <label
                                 htmlFor="selected-project"
-                                className="mb-2 block text-sm font-medium text-gray-700"
+                                className={label()}
                             >
                                 Selected Project
                             </label>
@@ -56,7 +58,7 @@ function ProjectAppShell() {
                                 onChange={(event) =>
                                     setSelectedProjectId(event.target.value)
                                 }
-                                className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900"
+                                className={select()}
                             >
                                 {projectOptions.map((projectId) => (
                                     <option key={projectId} value={projectId}>
@@ -64,7 +66,7 @@ function ProjectAppShell() {
                                     </option>
                                 ))}
                             </select>
-                        </div>
+                        </Card>
                         <HeightmapViewer />
                         <ImageUpload />
                         <ConfigEditor />

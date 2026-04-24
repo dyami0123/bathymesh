@@ -1,5 +1,7 @@
 import { useProject, useProjectDispatch } from "@/state/projectContext";
 import { getNestedValue } from "@/utilites";
+import { cn } from "@/lib/cn";
+import { heading, input } from "@/components/ui/styles";
 
 export type ConfigField = {
     path: string;
@@ -66,7 +68,10 @@ function ConfigFieldInput({ field }: { field: ConfigField }) {
                 min={field.min}
                 max={field.max}
                 step={field.step}
-                className="ml-2 p-1 border rounded"
+                className={cn(
+                    input({ variant: "compact", width: "fixed" }),
+                    "ml-2"
+                )}
             />
         </label>
     );
@@ -81,7 +86,7 @@ export function generateConfigComponents(fields: ConfigField[]) {
 
     return (
         <div className="flex flex-col gap-4">
-            <h2 className="text-lg font-bold">Contour Extraction Options</h2>
+            <h2 className={heading()}>Contour Extraction Options</h2>
             <div className="flex flex-col gap-2">
                 {fields.map((field) => (
                     <ConfigFieldInput key={field.path} field={field} />

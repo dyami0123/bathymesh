@@ -21,6 +21,8 @@ import {
     calculateProjectHeightmapApiHeightmapProjectIdPost,
 } from "@/client";
 import { blockingApiCall } from "@/blockingApiCall";
+import { cn } from "@/lib/cn";
+import { button, badge } from "@/components/ui/styles";
 
 import type { ImageData, HeightmapDataJson } from "@/client";
 
@@ -400,11 +402,15 @@ export function HeightmapViewer() {
                     <button
                         type="button"
                         onClick={() => setColorMode("height")}
-                        className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
-                            colorMode === "height"
-                                ? "bg-gray-900 text-white"
-                                : "bg-transparent text-gray-700 hover:bg-gray-100"
-                        }`}
+                        className={cn(
+                            button({
+                                intent:
+                                    colorMode === "height"
+                                        ? "primary"
+                                        : "ghost",
+                                shape: "pill",
+                            })
+                        )}
                     >
                         Height
                     </button>
@@ -413,11 +419,13 @@ export function HeightmapViewer() {
                         type="button"
                         onClick={() => setColorMode("image")}
                         disabled={!surfaceData.imageColors}
-                        className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
-                            colorMode === "image"
-                                ? "bg-gray-900 text-white"
-                                : "bg-transparent text-gray-700 hover:bg-gray-100"
-                        } disabled:cursor-not-allowed disabled:opacity-45`}
+                        className={cn(
+                            button({
+                                intent:
+                                    colorMode === "image" ? "primary" : "ghost",
+                                shape: "pill",
+                            })
+                        )}
                     >
                         Image
                     </button>
@@ -428,7 +436,10 @@ export function HeightmapViewer() {
                         type="button"
                         onClick={() => void loadData(true)}
                         disabled={refreshing}
-                        className="flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        className={cn(
+                            button({ intent: "ghost", shape: "pill" }),
+                            "gap-2"
+                        )}
                     >
                         {refreshing ? <Spinner /> : null}
                         <span>{refreshing ? "Refreshing" : "Refresh"}</span>
@@ -436,7 +447,12 @@ export function HeightmapViewer() {
                 </div>
 
                 {error ? (
-                    <div className="absolute bottom-4 left-4 z-10 rounded-full bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 shadow-sm">
+                    <div
+                        className={cn(
+                            badge({ intent: "error-pill" }),
+                            "absolute bottom-4 left-4 z-10"
+                        )}
+                    >
                         {error}
                     </div>
                 ) : null}
