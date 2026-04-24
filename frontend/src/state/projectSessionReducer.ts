@@ -1,24 +1,6 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import type { ProjectConfigOutput } from "@/client";
 import { projectReducer, type Action as ProjectAction } from "./projectReducer";
-import {
-    getProjectConfigApiConfigProjectIdGet,
-    setProjectConfigApiConfigProjectIdPut,
-    type ProjectConfigInput,
-} from "@/client";
-import {
-    ProjectStateContext,
-    ProjectDispatchContext,
-    ProjectSelectionContext,
-} from "./projectContext";
-import {
-    addProjectId,
-    fetchProjectIdsFromApi,
-    getStoredProjectIds,
-    getStoredSelectedProjectId,
-    saveStoredProjectIds,
-    saveStoredSelectedProjectId,
-} from "@/projectStorage";
+import { addProjectId } from "@/projectStorage";
 
 type ProjectSessionState = {
     project: ProjectConfigOutput | null;
