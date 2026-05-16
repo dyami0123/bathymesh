@@ -1,6 +1,5 @@
 import { ContourOptions } from "./ConfigForms/ContourOptions";
 import { PostProcessingConfig } from "./ConfigForms/PostProcessingConfig";
-import { ProjectConfigYaml } from "./ProjectConfigYaml";
 import { ColorMapConfigEditor } from "./ColorMapConfigEditor";
 
 export function ConfigEditor() {
@@ -13,7 +12,6 @@ export function ConfigEditor() {
                 <ContourOptions />
                 <PostProcessingConfig />
             </div>
-            <ProjectConfigYaml />
         </div>
     );
 }

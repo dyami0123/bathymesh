@@ -53,11 +53,14 @@ export function ProjectStateProvider({
                 console.warn("Failed to fetch project list from API", error);
             }
 
+            console.log("foo!");
+
             const seededOptions = [
                 ...apiProjectIds,
                 ...storedProjectIds,
             ].filter((value, index, values) => values.indexOf(value) === index);
 
+            console.log("foo!2");
             saveStoredProjectIds(seededOptions);
 
             const storedSelectedProjectId = getStoredSelectedProjectId();
@@ -67,6 +70,7 @@ export function ProjectStateProvider({
                     ? storedSelectedProjectId
                     : (seededOptions[0] ?? "");
 
+            console.log("foo!3");
             sessionDispatch({
                 type: "initialize",
                 projectOptions: seededOptions,
@@ -78,7 +82,16 @@ export function ProjectStateProvider({
                     type: "set_project_loading",
                     isProjectLoading: false,
                 });
+                console.log("LOAD");
             }
+
+            console.log("foo!5");
+            const latestSessionState = sessionState;
+            const latestProjectState: ProjectConfigOutput | null =
+                latestSessionState.project;
+
+            console.log("Latest session state:", latestSessionState);
+            console.log("Latest project state:", latestProjectState);
         };
 
         void initializeProjectSelection();

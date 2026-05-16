@@ -33,6 +33,7 @@ export function projectSessionReducer(
 ): ProjectSessionState {
     switch (action.type) {
         case "initialize":
+            console.log("Init");
             return {
                 ...state,
                 projectOptions: action.projectOptions,
@@ -41,18 +42,21 @@ export function projectSessionReducer(
             };
 
         case "set_selected_project_id":
+            console.log("set_selected_project_id");
             return {
                 ...state,
                 selectedProjectId: action.selectedProjectId,
             };
 
         case "set_project_loading":
+            console.log("set_loading");
             return {
                 ...state,
                 isProjectLoading: action.isProjectLoading,
             };
 
         case "set_project": {
+            console.log("set_project");
             const nextOptions = addProjectId(
                 state.projectOptions,
                 action.project.project_id

@@ -24,9 +24,9 @@ import { blockingApiCall } from "@/blockingApiCall";
 import { cn } from "@/lib/cn";
 import { button, badge } from "@/components/ui/styles";
 
-import type { ImageData, HeightmapDataJson } from "@/client";
+import type { HeightmapDataJson } from "@/client";
 
-export const PREVIEW_DIM = 150;
+export const PREVIEW_DIM = 25;
 
 type ActiveImagePayload = ImageData | Blob | File | null;
 
@@ -395,10 +395,10 @@ export function HeightmapViewer() {
     } else {
         mainCanvas = (
             <div
-                className="relative h-[70vh] w-full overflow-hidden rounded-lg bg-white"
+                className=" relative h-[70vh] w-full overflow-hidden rounded-lg bg-white border border-red"
                 style={isPickingColor ? { cursor: "crosshair" } : undefined}
             >
-                <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-full bg-white/92 p-1 shadow-lg backdrop-blur">
+                <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-full bg-white/92 p-1 shadow-lg backdrop-blur border border-red">
                     <button
                         type="button"
                         onClick={() => setColorMode("height")}
@@ -430,7 +430,7 @@ export function HeightmapViewer() {
                         Image
                     </button>
 
-                    <div className="mx-1 h-5 w-px bg-gray-200" />
+                    <div className="mx-1 h-5 w-px bg-gray-200 " />
 
                     <button
                         type="button"
@@ -438,7 +438,7 @@ export function HeightmapViewer() {
                         disabled={refreshing}
                         className={cn(
                             button({ intent: "ghost", shape: "pill" }),
-                            "gap-2"
+                            "gap-2 "
                         )}
                     >
                         {refreshing ? <Spinner /> : null}
@@ -457,33 +457,35 @@ export function HeightmapViewer() {
                     </div>
                 ) : null}
 
-                <Canvas shadows dpr={[1, 2]} camera={{ fov: 45 }}>
-                    <color attach="background" args={["#ffffff"]} />
-                    <ambientLight intensity={0.55} />
-                    <directionalLight
-                        position={[30, 40, 20]}
-                        intensity={1.25}
-                        castShadow
-                    />
-                    <directionalLight
-                        position={[-20, 10, -20]}
-                        intensity={0.35}
-                    />
+                <div className="w-full h-full">
+                    <Canvas shadows dpr={[1, 2]} camera={{ fov: 45 }}>
+                        <color attach="background" args={["#ffffff"]} />
+                        <ambientLight intensity={0.55} />
+                        <directionalLight
+                            position={[30, 40, 20]}
+                            intensity={1.25}
+                            castShadow
+                        />
+                        <directionalLight
+                            position={[-20, 10, -20]}
+                            intensity={0.35}
+                        />
 
-                    <SurfaceMesh
-                        data={surfaceData.grid}
-                        stats={surfaceData.stats}
-                        activeColors={activeColors}
-                        onPickColor={handlePickColor}
-                        isPickingActive={isPickingColor}
-                        onHover={handleHover}
-                        onHoverEnd={handleHoverEnd}
-                    />
-                    <CameraRig
-                        data={surfaceData.grid}
-                        stats={surfaceData.stats}
-                    />
-                </Canvas>
+                        <SurfaceMesh
+                            data={surfaceData.grid}
+                            stats={surfaceData.stats}
+                            activeColors={activeColors}
+                            onPickColor={handlePickColor}
+                            isPickingActive={isPickingColor}
+                            onHover={handleHover}
+                            onHoverEnd={handleHoverEnd}
+                        />
+                        <CameraRig
+                            data={surfaceData.grid}
+                            stats={surfaceData.stats}
+                        />
+                    </Canvas>
+                </div>
 
                 {isPickingColor && hoverInfo && (
                     <div
