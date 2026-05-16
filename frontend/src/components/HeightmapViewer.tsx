@@ -28,9 +28,16 @@ import type { HeightmapDataJson } from "@/client";
 
 export const PREVIEW_DIM = 25;
 
-type ActiveImagePayload = ImageData | Blob | File | null;
+type BackendImageData = {
+    data: unknown;
+    type?: string;
+};
 
-function normalizeImagePayload(payload: ActiveImagePayload): ImageData | null {
+type ActiveImagePayload = BackendImageData | Blob | File | null;
+
+function normalizeImagePayload(
+    payload: ActiveImagePayload
+): BackendImageData | null {
     if (!payload) {
         return null;
     }
@@ -71,7 +78,7 @@ export function HeightmapViewer() {
     );
 
     const setActiveImageData = useCallback(
-        (data: ImageData) => viewerDispatch({ type: "set_image", data }),
+        (data: BackendImageData) => viewerDispatch({ type: "set_image", data }),
         [viewerDispatch]
     );
 

@@ -149,8 +149,13 @@ export function JobSubmitButton<const TJobType extends string, TBody>({
         // Set up interval polling
         pollIntervalRef.current = setInterval(checkStatus, POLL_INTERVAL_MS);
 
-        // Cleanup: cancel the interval when component unmounts or state changes
-        return stopPolling;
+        // Cleanup: cancel interval without mutating component state.
+        return () => {
+            if (pollIntervalRef.current) {
+                clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+            }
+        };
     }, [jobState.type === "polling" ? jobState.jobId : null]);
 
     return (

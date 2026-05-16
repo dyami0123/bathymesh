@@ -38,7 +38,7 @@ function ProjectAppShell() {
     const project = useProjectOptional();
 
     if (isProjectLoading) {
-        return <div>Loading project...</div>;
+        return <div>Loading project…</div>;
     }
 
     if (!project) {
@@ -54,24 +54,26 @@ function ProjectAppShell() {
                     <div className="flex w-full flex-col gap-4 bg-white h-full">
                         <div className="flex w-full">
                             <HeightmapViewer />
-                            <div className="w-1/2">
-                                {TabbedContent([
-                                    {
-                                        id: "Colormap Editor",
-                                        label: "Colormap Editor",
-                                        content: <ColorMapConfigEditor />,
-                                    },
-                                    {
-                                        id: "Image Upload",
-                                        label: "Image Upload",
-                                        content: <ImageUpload />,
-                                    },
-                                    {
-                                        id: "Project Config YAML",
-                                        label: "Project Config YAML",
-                                        content: <ProjectConfigYaml />,
-                                    },
-                                ])}
+                            <div className="w-2/3">
+                                <TabbedContent
+                                    tabs={[
+                                        {
+                                            id: "Colormap Editor",
+                                            label: "Colormap Editor",
+                                            content: <ColorMapConfigEditor />,
+                                        },
+                                        {
+                                            id: "Image Upload",
+                                            label: "Image Upload",
+                                            content: <ImageUpload />,
+                                        },
+                                        {
+                                            id: "Project Config YAML",
+                                            label: "Project Config YAML",
+                                            content: <ProjectConfigYaml />,
+                                        },
+                                    ]}
+                                />
                             </div>
                         </div>
                         <div className="flex w-full justify-center ">

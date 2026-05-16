@@ -75,29 +75,6 @@ export function ColorPicker({
                 className={colorInput()}
                 aria-label="Pick color"
             />
-            <input
-                type="text"
-                value={draftColor}
-                onChange={(event) => {
-                    const nextColor = normalizeHexColor(event.target.value);
-                    if (nextColor) {
-                        setDraftColor(nextColor);
-                        setHasUncommittedChange(true);
-                    }
-                }}
-                onBlur={commitDraftColor}
-                onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                        commitDraftColor();
-                    }
-                }}
-                disabled={disabled}
-                className={cn(
-                    input({ variant: "compact", width: "fixed" }),
-                    "w-24"
-                )}
-                aria-label="Hex color"
-            />
         </div>
     );
 }

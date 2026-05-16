@@ -1,8 +1,12 @@
 import { useState } from "react";
 
-export function TabbedContent(
-    tabs: { id: string; label: string; content: React.ReactNode }[]
-) {
+type TabContent = {
+    id: string;
+    label: string;
+    content: React.ReactNode;
+};
+
+export function TabbedContent({ tabs }: { tabs: TabContent[] }) {
     const [activeTab, setActiveTab] = useState(tabs[0]?.id);
 
     return (
@@ -13,10 +17,10 @@ export function TabbedContent(
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`px-4 py-2 -mb-px border-b-2 transition ${
+                        className={`px-4 py-2 -mb-px border-b-2 transition text-zinc-500 ${
                             activeTab === tab.id
-                                ? "border-blue-500 font-semibold"
-                                : "border-transparent text-gray-500"
+                                ? "border-blue-500 font-semibold "
+                                : "border-transparent "
                         }`}
                     >
                         {tab.label}
@@ -25,7 +29,7 @@ export function TabbedContent(
             </div>
 
             {/* Tab content */}
-            <div className="w-full p-4 border rounded bg-gray-50">
+            <div className="w-full p-4 border rounded bg-zinc-50">
                 {tabs.find((tab) => tab.id === activeTab)?.content}
             </div>
         </div>

@@ -34,11 +34,11 @@ export function projectSessionReducer(
     switch (action.type) {
         case "initialize":
             console.log("Init");
+            console.log(action.selectedProjectId);
             return {
                 ...state,
                 projectOptions: action.projectOptions,
                 selectedProjectId: action.selectedProjectId,
-                isProjectLoading: action.selectedProjectId.length > 0,
             };
 
         case "set_selected_project_id":

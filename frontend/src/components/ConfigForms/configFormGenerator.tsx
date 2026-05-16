@@ -78,12 +78,6 @@ function ConfigFieldInput({ field }: { field: ConfigField }) {
 }
 
 export function generateConfigComponents(fields: ConfigField[]) {
-    // validate paths on build
-    const project = useProject();
-    fields.map((field) => {
-        getNestedValue(project, field.path);
-    });
-
     return (
         <div className="flex flex-col gap-4">
             <h2 className={heading()}>Contour Extraction Options</h2>
