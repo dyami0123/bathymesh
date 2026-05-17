@@ -80,6 +80,20 @@ class MeshData(BaseModel):
     data: o3d.geometry.TriangleMesh
 
 
+class MeshDataJson(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    vertices: list[list[float]]
+    triangles: list[list[int]]
+
+    @classmethod
+    def convert(cls, mesh_data: MeshData) -> "MeshDataJson":
+        """Convert from internal format to API output format."""
+        vertices = np.asarray(mesh_data.data.vertices, dtype=np.float32).tolist()
+        triangles = np.asarray(mesh_data.data.triangles, dtype=np.int32).tolist()
+        return cls(vertices=vertices, triangles=triangles)
+
+
 class ThresholdSnapshot(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 

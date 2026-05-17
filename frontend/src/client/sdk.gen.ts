@@ -2,7 +2,7 @@
 
 import { type Client, formDataBodySerializer, type Options as Options2, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { CalculateProjectHeightmapApiHeightmapProjectIdPostData, CalculateProjectHeightmapApiHeightmapProjectIdPostErrors, CalculateProjectHeightmapApiHeightmapProjectIdPostResponses, DefaultsApiConfigDefaultsGetData, DefaultsApiConfigDefaultsGetResponses, GetJobStatusApiJobsJobIdGetData, GetJobStatusApiJobsJobIdGetErrors, GetJobStatusApiJobsJobIdGetResponses, GetProjectConfigApiConfigProjectIdGetData, GetProjectConfigApiConfigProjectIdGetErrors, GetProjectConfigApiConfigProjectIdGetResponses, GetProjectHeightmapApiHeightmapProjectIdGetData, GetProjectHeightmapApiHeightmapProjectIdGetErrors, GetProjectHeightmapApiHeightmapProjectIdGetResponses, GetProjectImageApiImageProjectIdGetData, GetProjectImageApiImageProjectIdGetErrors, GetProjectImageApiImageProjectIdGetResponses, HealthCheckApiHealthGetData, HealthCheckApiHealthGetResponses, ListProjectsApiProjectsGetData, ListProjectsApiProjectsGetResponses, RootGetData, RootGetResponses, SetProjectConfigApiConfigProjectIdPutData, SetProjectConfigApiConfigProjectIdPutErrors, SetProjectConfigApiConfigProjectIdPutResponses, SetProjectImageApiImageProjectIdPutData, SetProjectImageApiImageProjectIdPutErrors, SetProjectImageApiImageProjectIdPutResponses, ValidateProjectConfigApiConfigValidatePostData, ValidateProjectConfigApiConfigValidatePostErrors, ValidateProjectConfigApiConfigValidatePostResponses } from './types.gen';
+import type { CalculateProjectHeightmapApiHeightmapProjectIdPostData, CalculateProjectHeightmapApiHeightmapProjectIdPostErrors, CalculateProjectHeightmapApiHeightmapProjectIdPostResponses, CalculateProjectMeshApiMeshdataProjectIdPostData, CalculateProjectMeshApiMeshdataProjectIdPostErrors, CalculateProjectMeshApiMeshdataProjectIdPostResponses, DefaultsApiConfigDefaultsGetData, DefaultsApiConfigDefaultsGetResponses, GetJobStatusApiJobsJobIdGetData, GetJobStatusApiJobsJobIdGetErrors, GetJobStatusApiJobsJobIdGetResponses, GetProjectConfigApiConfigProjectIdGetData, GetProjectConfigApiConfigProjectIdGetErrors, GetProjectConfigApiConfigProjectIdGetResponses, GetProjectHeightmapApiHeightmapProjectIdGetData, GetProjectHeightmapApiHeightmapProjectIdGetErrors, GetProjectHeightmapApiHeightmapProjectIdGetResponses, GetProjectImageApiImageProjectIdGetData, GetProjectImageApiImageProjectIdGetErrors, GetProjectImageApiImageProjectIdGetResponses, GetProjectMeshApiMeshdataProjectIdGetData, GetProjectMeshApiMeshdataProjectIdGetErrors, GetProjectMeshApiMeshdataProjectIdGetResponses, HealthCheckApiHealthGetData, HealthCheckApiHealthGetResponses, ListProjectsApiProjectsGetData, ListProjectsApiProjectsGetResponses, RootGetData, RootGetResponses, SetProjectConfigApiConfigProjectIdPutData, SetProjectConfigApiConfigProjectIdPutErrors, SetProjectConfigApiConfigProjectIdPutResponses, SetProjectImageApiImageProjectIdPutData, SetProjectImageApiImageProjectIdPutErrors, SetProjectImageApiImageProjectIdPutResponses, ValidateProjectConfigApiConfigValidatePostData, ValidateProjectConfigApiConfigValidatePostErrors, ValidateProjectConfigApiConfigValidatePostResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -95,6 +95,23 @@ export const getProjectHeightmapApiHeightmapProjectIdGet = <ThrowOnError extends
  */
 export const calculateProjectHeightmapApiHeightmapProjectIdPost = <ThrowOnError extends boolean = false>(options: Options<CalculateProjectHeightmapApiHeightmapProjectIdPostData, ThrowOnError>) => (options.client ?? client).post<CalculateProjectHeightmapApiHeightmapProjectIdPostResponses, CalculateProjectHeightmapApiHeightmapProjectIdPostErrors, ThrowOnError>({
     url: '/api/heightmap/{project_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get Project Mesh
+ */
+export const getProjectMeshApiMeshdataProjectIdGet = <ThrowOnError extends boolean = false>(options: Options<GetProjectMeshApiMeshdataProjectIdGetData, ThrowOnError>) => (options.client ?? client).get<GetProjectMeshApiMeshdataProjectIdGetResponses, GetProjectMeshApiMeshdataProjectIdGetErrors, ThrowOnError>({ url: '/api/meshdata/{project_id}', ...options });
+
+/**
+ * Calculate Project Mesh
+ */
+export const calculateProjectMeshApiMeshdataProjectIdPost = <ThrowOnError extends boolean = false>(options: Options<CalculateProjectMeshApiMeshdataProjectIdPostData, ThrowOnError>) => (options.client ?? client).post<CalculateProjectMeshApiMeshdataProjectIdPostResponses, CalculateProjectMeshApiMeshdataProjectIdPostErrors, ThrowOnError>({
+    url: '/api/meshdata/{project_id}',
     ...options,
     headers: {
         'Content-Type': 'application/json',

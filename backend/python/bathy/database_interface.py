@@ -5,9 +5,9 @@ from bathy.data_model import ImageData, MeshData, HeightmapData
 import logging
 from pathlib import Path
 from PIL import Image
+import open3d as o3d  # type: ignore
 import yaml
 import io
-
 
 logger = logging.getLogger(__name__)
 
@@ -224,12 +224,22 @@ class DatabaseInterfaceClass:
         return HeightmapData(data=heightmap_array, _post_processed=post_processed)
 
     def set_mesh_data(self, project_id: str, mesh_data: MeshData) -> None:
-        logger.debug(f"Setting STL data for project: {project_id}")
-        pass
+
+        mesh_data_path = self.get_path(
+            project_id, f"{project_id}_meshdata.stl", is_preview=False
+        )
+
+        o3d.io.write_triangle_mesh(mesh_data_path, mesh_data.data)
 
     def get_mesh_data(self, project_id: str) -> MeshData:
-        logger.debug(f"Getting STL data for project: {project_id}")
-        pass
+
+        mesh_data_path = self.get_path(
+            project_id, f"{project_id}_meshdata.stl", is_preview=False
+        )
+
+        triange_data = o3d.io.read_triangle_mesh(mesh_data_path)
+
+        return MeshData(data=triange_data)
 
     def get_path(self, project_id: str, filename: str, is_preview: bool) -> Path:
         return data_dir / project_id / ("preview" if is_preview else "final") / filename

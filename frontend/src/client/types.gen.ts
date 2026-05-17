@@ -229,6 +229,20 @@ export type MeshCombinationConfig = {
 };
 
 /**
+ * MeshDataJson
+ */
+export type MeshDataJson = {
+    /**
+     * Vertices
+     */
+    vertices: Array<Array<number>>;
+    /**
+     * Triangles
+     */
+    triangles: Array<Array<number>>;
+};
+
+/**
  * MeshGenerationConfig
  */
 export type MeshGenerationConfigInput = {
@@ -260,6 +274,13 @@ export type MeshGenerationConfigOutput = {
     contour_extraction: ContourExtractionConfig;
     triangulation: TriangulationConfig;
     post_processing: PostProcessingConfig;
+};
+
+/**
+ * MeshGenerationParams
+ */
+export type MeshGenerationParams = {
+    [key: string]: unknown;
 };
 
 /**
@@ -702,6 +723,74 @@ export type CalculateProjectHeightmapApiHeightmapProjectIdPostResponses = {
 };
 
 export type CalculateProjectHeightmapApiHeightmapProjectIdPostResponse = CalculateProjectHeightmapApiHeightmapProjectIdPostResponses[keyof CalculateProjectHeightmapApiHeightmapProjectIdPostResponses];
+
+export type GetProjectMeshApiMeshdataProjectIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+    };
+    query: {
+        /**
+         * Is Preview
+         */
+        is_preview: boolean;
+    };
+    url: '/api/meshdata/{project_id}';
+};
+
+export type GetProjectMeshApiMeshdataProjectIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetProjectMeshApiMeshdataProjectIdGetError = GetProjectMeshApiMeshdataProjectIdGetErrors[keyof GetProjectMeshApiMeshdataProjectIdGetErrors];
+
+export type GetProjectMeshApiMeshdataProjectIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: MeshDataJson;
+};
+
+export type GetProjectMeshApiMeshdataProjectIdGetResponse = GetProjectMeshApiMeshdataProjectIdGetResponses[keyof GetProjectMeshApiMeshdataProjectIdGetResponses];
+
+export type CalculateProjectMeshApiMeshdataProjectIdPostData = {
+    /**
+     * Params
+     */
+    body: MeshGenerationParams | null;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+    };
+    query?: never;
+    url: '/api/meshdata/{project_id}';
+};
+
+export type CalculateProjectMeshApiMeshdataProjectIdPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CalculateProjectMeshApiMeshdataProjectIdPostError = CalculateProjectMeshApiMeshdataProjectIdPostErrors[keyof CalculateProjectMeshApiMeshdataProjectIdPostErrors];
+
+export type CalculateProjectMeshApiMeshdataProjectIdPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: JobStatus;
+};
+
+export type CalculateProjectMeshApiMeshdataProjectIdPostResponse = CalculateProjectMeshApiMeshdataProjectIdPostResponses[keyof CalculateProjectMeshApiMeshdataProjectIdPostResponses];
 
 export type GetJobStatusApiJobsJobIdGetData = {
     body?: never;

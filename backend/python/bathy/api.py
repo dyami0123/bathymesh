@@ -9,8 +9,18 @@ from fastapi.responses import Response
 from typing import cast
 from bathy.config import ProjectConfig
 from bathy.database_interface import DatabaseInterface
-from bathy.data_model import HeightmapDataJson, HeightmapData, ImageData, JobStatus
-from bathy.workflows.job_submission_interface import submit_job, HeightmapParams
+from bathy.data_model import (
+    HeightmapDataJson,
+    HeightmapData,
+    ImageData,
+    JobStatus,
+    MeshDataJson,
+)
+from bathy.workflows.job_submission_interface import (
+    submit_job,
+    HeightmapParams,
+    MeshGenerationParams,
+)
 from bathy.workflows.job_runner import job_runner
 from bathy.apply_openapi_overrides import apply_openapi_overrides
 from bathy.api_logs import configure_application_logging
@@ -179,6 +189,20 @@ async def get_project_heightmap(project_id: str, is_preview: bool) -> HeightmapD
     return HeightmapDataJson.convert(heightmap_data)
 
 
+@app.get("/api/meshdata/{project_id}")
+async def get_project_mesh(project_id: str, is_preview: bool) -> MeshDataJson:
+    mesh_data = DatabaseInterface.get_mesh_data(
+        project_id=project_id,
+    )
+    if mesh_data is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No heightmap found for project '{project_id}'",
+        )
+
+    return MeshDataJson.convert(mesh_data)
+
+
 @app.post("/api/heightmap/{project_id}")
 async def calculate_project_heightmap(
     project_id: str, params: HeightmapParams | None
@@ -189,6 +213,16 @@ async def calculate_project_heightmap(
     return submit_job(
         project_id=project_id, job_type="calculate_heightmap", params=params
     )
+
+
+@app.post("/api/meshdata/{project_id}")
+async def calculate_project_mesh(
+    project_id: str, params: MeshGenerationParams | None
+) -> JobStatus:
+    logger.info(
+        f"Received request to calculate heightmap for project {project_id} with params: {params}"
+    )
+    return submit_job(project_id=project_id, job_type="generate_mesh", params=params)
 
 
 @app.get("/api/jobs/{job_id}")

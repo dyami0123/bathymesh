@@ -47,10 +47,14 @@ class HeightmapParams(BaseModel):
         return max_dim
 
 
+class MeshGenerationParams(BaseModel):
+    pass
+
+
 def submit_job(
     project_id: str,
     job_type: Literal["calculate_heightmap", "generate_mesh"],
-    params: HeightmapParams | None = None,
+    params: HeightmapParams | MeshGenerationParams | None = None,
 ) -> JobStatus:
 
     if job_type == "calculate_heightmap":
@@ -95,7 +99,33 @@ def submit_job(
             }
 
         task = run_heightmap_job
+    elif job_type == "generate_mesh":
 
+        def run_mesh_job():
+            project_config = DatabaseInterface.get_config(project_id=project_id)
+            heightmap_data = DatabaseInterface.get_heightmap_data(
+                project_id=project_id, is_preview=False
+            )
+
+            if heightmap_data is None:
+                raise ValueError(f"No heightmap found for project '{project_id}'")
+
+            meshdata, _ = generate_mesh(
+                heightmap_data=heightmap_data.data,
+                project_config=DatabaseInterface.get_config(project_id=project_id),
+            )
+
+            DatabaseInterface.set_mesh_data(
+                project_id=project_config.project_id,
+                mesh_data=meshdata,
+            )
+
+            return {
+                "projectId": project_id,
+                "message": "Mesh generation job executed",
+            }
+
+        task = run_mesh_job
     else:
         raise NotImplementedError
 
