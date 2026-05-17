@@ -1,4 +1,4 @@
-import type { ImageData } from "@/client";
+import type { ImageData } from "@/types/imageData";
 
 export function extractImageBlob(payload: unknown): Blob | null {
     if (payload instanceof Blob || payload instanceof File) {

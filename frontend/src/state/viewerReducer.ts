@@ -1,4 +1,5 @@
-import type { ImageData, HeightmapDataJson } from "@/client";
+import type { HeightmapDataJson } from "@/client";
+import type { ImageData } from "@/types/imageData";
 
 export type ViewerState = {
     activeImageData: ImageData | null;

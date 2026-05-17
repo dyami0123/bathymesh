@@ -3,14 +3,15 @@ import { useProject, useProjectDispatch } from "@/state/projectContext";
 import { useViewerDispatch } from "@/state/viewerContext";
 import { Spinner } from "./Spinner";
 import { blockingApiCall } from "@/blockingApiCall";
-import { PREVIEW_DIM } from "./HeightmapViewer";
+import { PREVIEW_DIM } from "@/constants/viewer";
 import {
     calculateProjectHeightmapApiHeightmapProjectIdPost,
     getProjectConfigApiConfigProjectIdGet,
     getProjectHeightmapApiHeightmapProjectIdGet,
     getProjectImageApiImageProjectIdGet,
 } from "@/client";
-import type { ImageData, HeightmapDataJson } from "@/client";
+import type { HeightmapDataJson } from "@/client";
+import type { ImageData } from "@/types/imageData";
 import { Card } from "./ui/Card";
 import { Heading } from "./ui/Heading";
 import { Badge } from "./ui/Badge";

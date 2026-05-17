@@ -18,7 +18,7 @@ import {
 } from "./colorPickerContext";
 import { useProject } from "./projectContext";
 import { blockingApiCall } from "@/blockingApiCall";
-import { PREVIEW_DIM } from "@/components/HeightmapViewer";
+import { PREVIEW_DIM } from "@/constants/viewer";
 
 const ColorMapChangedContext = createContext<(() => void) | null>(null);
 
@@ -67,7 +67,7 @@ export function ColormapStateProvider({
                 viewerDispatch({ type: "set_loading", value: false });
             }
         },
-        []
+        [viewerDispatch]
     );
 
     const handleColorMapChanged = useCallback(() => {

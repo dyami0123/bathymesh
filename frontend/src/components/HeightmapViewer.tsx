@@ -1,318 +1,39 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Canvas } from "@react-three/fiber";
-import { useProject } from "@/state/projectContext";
-import { useViewer, useViewerDispatch } from "@/state/viewerContext";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     useColorPicker,
     useColorPickerDispatch,
 } from "@/state/colorPickerContext";
-import {
-    getProjectHeightmapApiHeightmapProjectIdGet,
-    getProjectImageApiImageProjectIdGet,
-} from "@/client";
-import type { SurfaceData, ColorMode } from "@/data_processing";
-import { buildHeightColorArray } from "@/data_processing/heightColormap";
+import type { ColorMode } from "@/data_processing";
 import { Spinner } from "./Spinner";
-import { getImageColorsFromBlob } from "@/data_processing/imageProcessing";
 import { JobSubmitButton } from "./jobSubmitter";
-import { SurfaceMesh, CameraRig } from "./SurfaceMesh";
-import {
-    // calculateProjectContoursApiContoursProjectIdPost,
-    calculateProjectHeightmapApiHeightmapProjectIdPost,
-} from "@/client";
-import { blockingApiCall } from "@/blockingApiCall";
+import { HeightmapSceneCanvas } from "./HeightmapSceneCanvas";
 import { cn } from "@/lib/cn";
 import { button, badge } from "@/components/ui/styles";
-
-import type { HeightmapDataJson } from "@/client";
-
-export const PREVIEW_DIM = 75;
-
-type BackendImageData = {
-    data: unknown;
-    type?: string;
-};
-
-type ActiveImagePayload = BackendImageData | Blob | File | null;
-
-function normalizeImagePayload(
-    payload: ActiveImagePayload
-): BackendImageData | null {
-    if (!payload) {
-        return null;
-    }
-
-    if (payload instanceof Blob || payload instanceof File) {
-        const mimeType = payload.type;
-        const validType =
-            mimeType === "image/png" ||
-            mimeType === "image/jpeg" ||
-            mimeType === "image/tiff"
-                ? mimeType
-                : "image/png";
-
-        return {
-            data: payload,
-            type: validType,
-        };
-    }
-
-    return payload;
-}
+import { useTerrainSurfaceData } from "@/hooks/useTerrainSurfaceData";
 
 export function HeightmapViewer() {
-    const project = useProject();
-    const {
-        activeImageData,
-        activeHeightmapData,
-        refreshSignal,
-        isLoading: loading,
-    } = useViewer();
-    const viewerDispatch = useViewerDispatch();
     const { isPickingColor } = useColorPicker();
     const colorPickerDispatch = useColorPickerDispatch();
+    const {
+        surfaceData,
+        loading,
+        refreshing,
+        error,
+        isFirstLoad,
+        refreshSurfaceData,
+    } = useTerrainSurfaceData();
 
-    const setLoading = useCallback(
-        (value: boolean) => viewerDispatch({ type: "set_loading", value }),
-        [viewerDispatch]
-    );
-
-    const setActiveImageData = useCallback(
-        (data: BackendImageData) => viewerDispatch({ type: "set_image", data }),
-        [viewerDispatch]
-    );
-
-    const setActiveHeightmapData = useCallback(
-        (data: HeightmapDataJson) =>
-            viewerDispatch({ type: "set_heightmap", data }),
-        [viewerDispatch]
-    );
-
-    const [surfaceData, setSurfaceData] = useState<SurfaceData | null>(null);
-    const [refreshing, setRefreshing] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [colorMode, setColorMode] = useState<ColorMode>("height");
     const [heightMode, setHeightMode] = useState<"normalized" | "absolute">(
         "normalized"
     );
-    const [isFirstLoad, setIsFirstLoad] = useState(true);
-
-    const hasInitialDataRef = useRef(false);
-    const activeImageDataRef = useRef<ActiveImagePayload>(activeImageData);
-    const activeHeightmapDataRef = useRef<HeightmapDataJson | null>(
-        activeHeightmapData
-    );
+    const [showDebugLines, setShowDebugLines] = useState(true);
 
     useEffect(() => {
-        activeImageDataRef.current = activeImageData;
-    }, [activeImageData]);
-
-    useEffect(() => {
-        activeHeightmapDataRef.current = activeHeightmapData;
-    }, [activeHeightmapData]);
-
-    const loadData = useCallback(
-        async (forceRefresh = false) => {
-            const isFirstLoad = !hasInitialDataRef.current;
-
-            let resolvedImageData = normalizeImagePayload(
-                activeImageDataRef.current
-            );
-            let resolvedHeightmapData = activeHeightmapDataRef.current;
-
-            if (forceRefresh) {
-                resolvedImageData = null;
-                resolvedHeightmapData = null;
-            }
-
-            if (isFirstLoad) {
-                setLoading(true);
-                const existingHeightmapResult =
-                    await getProjectHeightmapApiHeightmapProjectIdGet({
-                        path: { project_id: project.project_id },
-                        throwOnError: true,
-                        query: { is_preview: true },
-                    });
-
-                if (!existingHeightmapResult.data?.data) {
-                    console.log(
-                        "No existing heightmap data, calculating preview heightmap..."
-                    );
-                    await blockingApiCall({
-                        endpoint:
-                            calculateProjectHeightmapApiHeightmapProjectIdPost,
-                        project_id: project.project_id,
-                        body: {
-                            is_preview: true,
-                            max_dimension_override: PREVIEW_DIM,
-                        },
-                    });
-
-                    const heightmapDataResult =
-                        await getProjectHeightmapApiHeightmapProjectIdGet({
-                            path: { project_id: project.project_id },
-                            throwOnError: true,
-                            query: { is_preview: true },
-                        });
-                    if (!heightmapDataResult.data?.data) {
-                        throw new Error(
-                            "Failed to load heightmap data after calculation. Please refresh and try again."
-                        );
-                    }
-                    resolvedHeightmapData =
-                        heightmapDataResult.data as HeightmapDataJson;
-                } else {
-                    console.log(
-                        "Existing heightmap data found, using it for preview."
-                    );
-                    resolvedHeightmapData =
-                        existingHeightmapResult.data as HeightmapDataJson;
-                }
-                activeHeightmapDataRef.current = resolvedHeightmapData;
-                setActiveHeightmapData(resolvedHeightmapData);
-            } else {
-                setRefreshing(true);
-            }
-            setError(null);
-
-            try {
-                if (!resolvedImageData) {
-                    console.log("No image data, fetching preview image...");
-                    try {
-                        const imageResult =
-                            await getProjectImageApiImageProjectIdGet({
-                                path: { project_id: project.project_id },
-                                throwOnError: true,
-                                query: { max_dimension: PREVIEW_DIM },
-                            });
-
-                        const normalizedImage = normalizeImagePayload(
-                            imageResult.data as ActiveImagePayload
-                        );
-                        if (normalizedImage) {
-                            resolvedImageData = normalizedImage;
-                            activeImageDataRef.current = normalizedImage;
-                            setActiveImageData(normalizedImage);
-                        }
-                    } catch {
-                        console.info(
-                            "Preview image is unavailable; continuing with height-based colors only."
-                        );
-                    }
-                }
-
-                if (!resolvedHeightmapData) {
-                    console.log(
-                        "No heightmap data, calculating preview heightmap..."
-                    );
-                    const heightmapResult =
-                        await getProjectHeightmapApiHeightmapProjectIdGet({
-                            path: { project_id: project.project_id },
-                            throwOnError: true,
-                            query: { is_preview: true },
-                        });
-
-                    if (!heightmapResult.data) {
-                        throw new Error("No image data available.");
-                    }
-
-                    resolvedHeightmapData =
-                        heightmapResult.data as HeightmapDataJson;
-                    activeHeightmapDataRef.current = resolvedHeightmapData;
-                    setActiveHeightmapData(resolvedHeightmapData);
-                }
-
-                const raw = resolvedHeightmapData?.data;
-                if (!raw?.length || !raw[0]?.length) {
-                    throw new Error(
-                        "No heightmap data available. Please calculate one first."
-                    );
-                }
-
-                // const filled = fillNulls(sampled, fullStats.mean);
-                const filled = raw.map((row) =>
-                    row.map((v) => (v == null || Number.isNaN(v) ? 0 : v))
-                );
-
-                // TODO: move to helper function? may be used elsewhere.
-                const min_val = filled.reduce(
-                    (min, row) =>
-                        Math.min(
-                            min,
-                            ...row.map((v) =>
-                                v == null || Number.isNaN(v) ? Infinity : v
-                            )
-                        ),
-                    Infinity
-                );
-
-                const max_val = filled.reduce(
-                    (max, row) =>
-                        Math.max(
-                            max,
-                            ...row.map((v) =>
-                                v == null || Number.isNaN(v) ? -Infinity : v
-                            )
-                        ),
-                    -Infinity
-                );
-
-                const stats = {
-                    min: min_val,
-                    max: max_val,
-                };
-                const heightColors = buildHeightColorArray(filled, stats);
-                let imageColors: Float32Array | null = null;
-                if (resolvedImageData) {
-                    imageColors = await getImageColorsFromBlob(
-                        filled,
-                        resolvedImageData
-                    );
-                } else {
-                    console.warn(
-                        "No active image data available, skipping image color extraction."
-                    );
-                }
-
-                const nextSurface: SurfaceData = {
-                    grid: filled,
-                    stats: stats,
-                    heightColors,
-                    imageColors,
-                };
-
-                setSurfaceData(nextSurface);
-                setColorMode((prev) =>
-                    prev === "image" && !nextSurface.imageColors
-                        ? "height"
-                        : prev
-                );
-            } catch (err) {
-                const message =
-                    err instanceof Error
-                        ? err.message
-                        : "Failed to fetch surface data";
-                setError(message);
-            } finally {
-                hasInitialDataRef.current = true;
-                setIsFirstLoad(false);
-                setLoading(false);
-                setRefreshing(false);
-            }
-        },
-        [project.project_id, setActiveHeightmapData, setActiveImageData]
-    );
-
-    useEffect(() => {
-        void loadData(false);
-    }, [project.project_id, loadData]);
-
-    useEffect(() => {
-        if (!hasInitialDataRef.current || refreshSignal === 0) {
-            return;
+        if (colorMode === "image" && !surfaceData?.imageColors) {
+            setColorMode("height");
         }
-        void loadData(true);
-    }, [refreshSignal, loadData]);
+    }, [colorMode, surfaceData]);
 
     const activeColors = useMemo(() => {
         if (!surfaceData) return null;
@@ -480,7 +201,22 @@ export function HeightmapViewer() {
 
                     <button
                         type="button"
-                        onClick={() => void loadData(true)}
+                        onClick={() => setShowDebugLines((prev) => !prev)}
+                        className={cn(
+                            button({
+                                intent: showDebugLines ? "primary" : "ghost",
+                                shape: "pill",
+                            })
+                        )}
+                    >
+                        Debug
+                    </button>
+
+                    <div className="mx-1 h-5 w-px bg-gray-200 " />
+
+                    <button
+                        type="button"
+                        onClick={() => void refreshSurfaceData()}
                         disabled={refreshing}
                         className={cn(
                             button({ intent: "ghost", shape: "pill" }),
@@ -510,36 +246,17 @@ export function HeightmapViewer() {
                 ) : null}
 
                 <div className="w-full h-full">
-                    <Canvas shadows dpr={[1, 2]} camera={{ fov: 45 }}>
-                        <color attach="background" args={["#ffffff"]} />
-                        <ambientLight intensity={0.55} />
-                        <directionalLight
-                            position={[30, 40, 20]}
-                            intensity={1.25}
-                            castShadow
-                        />
-                        <directionalLight
-                            position={[-20, 10, -20]}
-                            intensity={0.35}
-                        />
-
-                        <SurfaceMesh
-                            data={surfaceData.grid}
-                            stats={surfaceData.stats}
-                            activeColors={activeColors}
-                            onPickColor={handlePickColor}
-                            isPickingActive={isPickingColor}
-                            onHover={handleHover}
-                            onHoverEnd={handleHoverEnd}
-                            heightMode={heightMode}
-                        />
-                        <CameraRig
-                            data={surfaceData.grid}
-                            stats={surfaceData.stats}
-                            isFirstLoad={isFirstLoad}
-                            heightMode={heightMode}
-                        />
-                    </Canvas>
+                    <HeightmapSceneCanvas
+                        surfaceData={surfaceData}
+                        activeColors={activeColors}
+                        isPickingColor={isPickingColor}
+                        isFirstLoad={isFirstLoad}
+                        heightMode={heightMode}
+                        showDebugLines={showDebugLines}
+                        onPickColor={handlePickColor}
+                        onHover={handleHover}
+                        onHoverEnd={handleHoverEnd}
+                    />
                 </div>
 
                 {isPickingColor && hoverInfo && (
