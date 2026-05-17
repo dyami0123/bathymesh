@@ -18,6 +18,10 @@ import { fileInput } from "./ui/styles";
 
 type UploadState = "idle" | "uploading" | "success" | "error";
 
+type ImageUploadProps = {
+    inPopup?: boolean;
+};
+
 function toImageData(payload: unknown): ImageData | null {
     if (payload instanceof Blob || payload instanceof File) {
         const mimeType = payload.type;
@@ -47,7 +51,7 @@ function toImageData(payload: unknown): ImageData | null {
     return null;
 }
 
-export function ImageUpload() {
+export function ImageUpload({ inPopup = false }: ImageUploadProps) {
     const project = useProject();
     const dispatch = useProjectDispatch();
     const viewerDispatch = useViewerDispatch();
@@ -183,58 +187,62 @@ export function ImageUpload() {
         }
     };
 
+    const content = (
+        <div className="space-y-4">
+            {/* File input */}
+            <div className="relative">
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept={ALLOWED_TYPES.join(",")}
+                    onChange={handleFileChange}
+                    disabled={uploadState === "uploading"}
+                    className={fileInput()}
+                />
+            </div>
+
+            {/* File name display */}
+            {fileName && (
+                <p className="text-sm text-gray-600">
+                    Selected: <span className="font-medium">{fileName}</span>
+                </p>
+            )}
+
+            {/* Status messages */}
+            {uploadState === "uploading" && (
+                <div className="flex items-center space-x-2 text-blue-600">
+                    <Spinner />
+                    <span className="text-sm">Uploading…</span>
+                </div>
+            )}
+
+            {uploadState === "success" && (
+                <Badge intent="success" role="status">
+                    ✓ Image uploaded successfully
+                </Badge>
+            )}
+
+            {uploadState === "error" && (
+                <Badge intent="error" role="alert">
+                    ✗ {errorMessage}
+                </Badge>
+            )}
+
+            {/* Supported formats info */}
+            <Badge intent="muted">
+                <p className="text-xs">Supported formats: PNG, JPEG, TIFF</p>
+            </Badge>
+        </div>
+    );
+
+    if (inPopup) {
+        return content;
+    }
+
     return (
         <Card className="w-full p-6">
             <Heading className="mb-4">Upload Image</Heading>
-
-            <div className="space-y-4">
-                {/* File input */}
-                <div className="relative">
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept={ALLOWED_TYPES.join(",")}
-                        onChange={handleFileChange}
-                        disabled={uploadState === "uploading"}
-                        className={fileInput()}
-                    />
-                </div>
-
-                {/* File name display */}
-                {fileName && (
-                    <p className="text-sm text-gray-600">
-                        Selected:{" "}
-                        <span className="font-medium">{fileName}</span>
-                    </p>
-                )}
-
-                {/* Status messages */}
-                {uploadState === "uploading" && (
-                    <div className="flex items-center space-x-2 text-blue-600">
-                        <Spinner />
-                        <span className="text-sm">Uploading...</span>
-                    </div>
-                )}
-
-                {uploadState === "success" && (
-                    <Badge intent="success" role="status">
-                        ✓ Image uploaded successfully
-                    </Badge>
-                )}
-
-                {uploadState === "error" && (
-                    <Badge intent="error" role="alert">
-                        ✗ {errorMessage}
-                    </Badge>
-                )}
-
-                {/* Supported formats info */}
-                <Badge intent="muted">
-                    <p className="text-xs">
-                        Supported formats: PNG, JPEG, TIFF
-                    </p>
-                </Badge>
-            </div>
+            {content}
         </Card>
     );
 }

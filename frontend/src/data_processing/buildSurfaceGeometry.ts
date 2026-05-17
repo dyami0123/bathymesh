@@ -1,10 +1,13 @@
 import * as THREE from "three";
 import type { Grid, GridStats } from "./types";
 
+export type HeightMode = "normalized" | "absolute";
+
 export function buildSurfaceGeometry(
     data: Grid,
     stats: GridStats,
-    max_height: number
+    max_height: number,
+    heightMode: HeightMode = "normalized"
 ) {
     const rows = data.length;
     const cols = data[0]?.length ?? 0;
@@ -14,7 +17,7 @@ export function buildSurfaceGeometry(
     const positionAttr = geometry.attributes.position as THREE.BufferAttribute;
 
     const valueRange = Math.max(stats.max - stats.min, 1e-6);
-    const zScale = max_height / valueRange;
+    const zScale = heightMode === "normalized" ? max_height / valueRange : 1;
 
     for (let r = 0; r < rows; r++) {
         const row = data[r];

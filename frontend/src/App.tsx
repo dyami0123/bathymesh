@@ -1,6 +1,5 @@
 import "./index.css";
 
-import { ConfigEditor } from "./components/ConfigEditor";
 import { ImageUpload } from "./components/ImageUpload";
 import { HeightmapViewer } from "./components/HeightmapViewer";
 import { ProjectStateProvider } from "./state/ProjectStateProvider";
@@ -10,16 +9,13 @@ import {
     useProjectOptional,
     useProjectSelectionState,
 } from "./state/projectContext";
-import { Card } from "./components/ui/Card";
-import { label, select } from "./components/ui/styles";
-import { TabbedContent } from "./components/ui/TabedContent";
-import { ProjectConfigYaml } from "./components/ProjectConfigYaml";
 import { ColorMapConfigEditor } from "./components/ColorMapConfigEditor";
-import { cn } from "@/lib/cn";
+import { MenuPopup } from "./components/ui/MenuPopup";
+import { ProjectSelector } from "./components/ProjectSelector";
 
 export function App() {
     return (
-        <div className="background-white min-h-screen `">
+        <div className="h-dvh bg-white">
             <ProjectStateProvider>
                 <ProjectAppShell />
             </ProjectStateProvider>
@@ -28,12 +24,7 @@ export function App() {
 }
 
 function ProjectAppShell() {
-    const {
-        projectOptions,
-        selectedProjectId,
-        setSelectedProjectId,
-        isProjectLoading,
-    } = useProjectSelectionState();
+    const { isProjectLoading } = useProjectSelectionState();
 
     const project = useProjectOptional();
 
@@ -50,58 +41,37 @@ function ProjectAppShell() {
     return (
         <ViewerStateProvider>
             <ColormapStateProvider>
-                <div className="min-h-screen w-full p-4 lg:p-6">
-                    <div className="flex w-full flex-col gap-4 bg-white h-full">
-                        <div className="flex w-full">
-                            <HeightmapViewer />
-                            <div className="w-2/3">
-                                <TabbedContent
-                                    tabs={[
-                                        {
-                                            id: "Colormap Editor",
-                                            label: "Colormap Editor",
-                                            content: <ColorMapConfigEditor />,
-                                        },
-                                        {
-                                            id: "Image Upload",
-                                            label: "Image Upload",
-                                            content: <ImageUpload />,
-                                        },
-                                        {
-                                            id: "Project Config YAML",
-                                            label: "Project Config YAML",
-                                            content: <ProjectConfigYaml />,
-                                        },
-                                    ]}
-                                />
-                            </div>
+                <div className="h-full w-full p-4 lg:p-6">
+                    <div className="flex h-full min-h-0 w-full flex-col gap-4 bg-white">
+                        <div className="flex w-full shrink-0 justify-end">
+                            <MenuPopup
+                                menuLabel="Menu"
+                                actions={[
+                                    {
+                                        id: "upload-image",
+                                        label: "Upload image…",
+                                        popupTitle: "Upload Image",
+                                        content: <ImageUpload inPopup />,
+                                    },
+                                    {
+                                        id: "select-project",
+                                        label: "Select project…",
+                                        popupTitle: "Select Project",
+                                        content: <ProjectSelector inPopup />,
+                                    },
+                                ]}
+                            />
                         </div>
-                        <div className="flex w-full justify-center ">
-                            <Card className="w-8/10">
-                                <label
-                                    htmlFor="selected-project"
-                                    className={label()}
-                                >
-                                    Selected Project
-                                </label>
-                                <select
-                                    id="selected-project"
-                                    value={selectedProjectId}
-                                    onChange={(event) =>
-                                        setSelectedProjectId(event.target.value)
-                                    }
-                                    className={cn(select())}
-                                >
-                                    {projectOptions.map((projectId) => (
-                                        <option
-                                            key={projectId}
-                                            value={projectId}
-                                        >
-                                            {projectId}
-                                        </option>
-                                    ))}
-                                </select>
-                            </Card>
+                        <div className="relative min-h-0 w-full flex-1 overflow-hidden rounded-lg">
+                            <div className="h-full w-full">
+                                <HeightmapViewer />
+                            </div>
+
+                            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 flex w-[clamp(18rem,32vw,28rem)] max-w-[calc(100%-0.75rem)] p-2 sm:p-3">
+                                <div className="pointer-events-auto h-full w-full">
+                                    <ColorMapConfigEditor />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

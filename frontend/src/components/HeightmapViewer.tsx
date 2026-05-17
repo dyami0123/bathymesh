@@ -26,7 +26,7 @@ import { button, badge } from "@/components/ui/styles";
 
 import type { HeightmapDataJson } from "@/client";
 
-export const PREVIEW_DIM = 25;
+export const PREVIEW_DIM = 75;
 
 type BackendImageData = {
     data: unknown;
@@ -92,6 +92,10 @@ export function HeightmapViewer() {
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [colorMode, setColorMode] = useState<ColorMode>("height");
+    const [heightMode, setHeightMode] = useState<"normalized" | "absolute">(
+        "normalized"
+    );
+    const [isFirstLoad, setIsFirstLoad] = useState(true);
 
     const hasInitialDataRef = useRef(false);
     const activeImageDataRef = useRef<ActiveImagePayload>(activeImageData);
@@ -291,6 +295,7 @@ export function HeightmapViewer() {
                 setError(message);
             } finally {
                 hasInitialDataRef.current = true;
+                setIsFirstLoad(false);
                 setLoading(false);
                 setRefreshing(false);
             }
@@ -382,9 +387,9 @@ export function HeightmapViewer() {
 
     let mainCanvas = null;
 
-    if (loading) {
+    if (loading && isFirstLoad) {
         mainCanvas = (
-            <div className="flex h-[70vh] w-full items-center justify-center bg-white">
+            <div className="flex h-full min-h-88 w-full items-center justify-center bg-white">
                 <div className="flex items-center gap-3 text-sm text-gray-600">
                     <Spinner />
                     <span>Loading surface...</span>
@@ -393,7 +398,7 @@ export function HeightmapViewer() {
         );
     } else if (!surfaceData || !activeColors) {
         mainCanvas = (
-            <div className="flex h-[70vh] w-full items-center justify-center bg-white">
+            <div className="flex h-full min-h-88 w-full items-center justify-center bg-white">
                 <p className="text-sm text-red-600">
                     {error ?? "No surface data available."}
                 </p>
@@ -402,7 +407,7 @@ export function HeightmapViewer() {
     } else {
         mainCanvas = (
             <div
-                className=" relative h-[70vh] w-full overflow-hidden rounded-lg bg-white border border-red"
+                className="relative h-full min-h-88 w-full overflow-hidden rounded-lg bg-white"
                 style={isPickingColor ? { cursor: "crosshair" } : undefined}
             >
                 <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-full bg-white/92 p-1 shadow-lg backdrop-blur border border-red">
@@ -441,6 +446,40 @@ export function HeightmapViewer() {
 
                     <button
                         type="button"
+                        onClick={() => setHeightMode("normalized")}
+                        className={cn(
+                            button({
+                                intent:
+                                    heightMode === "normalized"
+                                        ? "primary"
+                                        : "ghost",
+                                shape: "pill",
+                            })
+                        )}
+                    >
+                        Normalized
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setHeightMode("absolute")}
+                        className={cn(
+                            button({
+                                intent:
+                                    heightMode === "absolute"
+                                        ? "primary"
+                                        : "ghost",
+                                shape: "pill",
+                            })
+                        )}
+                    >
+                        Absolute
+                    </button>
+
+                    <div className="mx-1 h-5 w-px bg-gray-200 " />
+
+                    <button
+                        type="button"
                         onClick={() => void loadData(true)}
                         disabled={refreshing}
                         className={cn(
@@ -452,6 +491,12 @@ export function HeightmapViewer() {
                         <span>{refreshing ? "Refreshing" : "Refresh"}</span>
                     </button>
                 </div>
+
+                {refreshing ? (
+                    <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2 rounded-full bg-white/92 p-2 shadow-lg backdrop-blur border border-gray-200">
+                        <Spinner />
+                    </div>
+                ) : null}
 
                 {error ? (
                     <div
@@ -486,10 +531,13 @@ export function HeightmapViewer() {
                             isPickingActive={isPickingColor}
                             onHover={handleHover}
                             onHoverEnd={handleHoverEnd}
+                            heightMode={heightMode}
                         />
                         <CameraRig
                             data={surfaceData.grid}
                             stats={surfaceData.stats}
+                            isFirstLoad={isFirstLoad}
+                            heightMode={heightMode}
                         />
                     </Canvas>
                 </div>
@@ -515,5 +563,5 @@ export function HeightmapViewer() {
             </div>
         );
     }
-    return <div className="w-full">{mainCanvas}</div>;
+    return <div className="h-full w-full">{mainCanvas}</div>;
 }

@@ -1,16 +1,20 @@
 @import "tailwindcss";
 
 @layer base {
+  html {
+    @apply h-full;
+  }
+
   :root {
     @apply text-[rgba(255,255,255,0.87)] bg-[#242424] font-sans;
   }
 
   body {
-    @apply min-w-[320px] min-h-screen relative m-0;
+    @apply relative m-0 min-h-dvh min-w-[320px] h-full;
   }
 
   #root {
-    @apply w-full min-h-screen;
+    @apply h-full w-full;
   }
 }
 

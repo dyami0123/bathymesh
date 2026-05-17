@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { Grid, GridStats } from "@/data_processing";
-import { buildSurfaceGeometry } from "@/data_processing/buildSurfaceGeometry";
+import {
+    buildSurfaceGeometry,
+    type HeightMode,
+} from "@/data_processing/buildSurfaceGeometry";
 import { useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
-const SURFACE_MAX_HEIGHT = 24;
+const SURFACE_NORMALIZED_HEIGHT = 24;
 
 export function SurfaceMesh({
     data,
@@ -15,6 +18,7 @@ export function SurfaceMesh({
     isPickingActive = false,
     onHover,
     onHoverEnd,
+    heightMode = "normalized",
 }: {
     data: Grid;
     activeColors: Float32Array;
@@ -28,10 +32,17 @@ export function SurfaceMesh({
         clientY: number
     ) => void;
     onHoverEnd?: () => void;
+    heightMode?: HeightMode;
 }) {
     const geometry = useMemo(
-        () => buildSurfaceGeometry(data, stats, SURFACE_MAX_HEIGHT),
-        [data, stats]
+        () =>
+            buildSurfaceGeometry(
+                data,
+                stats,
+                SURFACE_NORMALIZED_HEIGHT,
+                heightMode
+            ),
+        [data, stats, heightMode]
     );
 
     useEffect(() => {
@@ -151,16 +162,36 @@ export function SurfaceMesh({
     );
 }
 
-export function CameraRig({ data, stats }: { data: Grid; stats: GridStats }) {
+export function CameraRig({
+    data,
+    stats,
+    isFirstLoad = false,
+    heightMode = "normalized",
+}: {
+    data: Grid;
+    stats: GridStats;
+    isFirstLoad?: boolean;
+    heightMode?: HeightMode;
+}) {
     const { camera } = useThree();
     const controlsRef = useRef<THREE.EventDispatcher | null>(null);
+    const cameraInitializedRef = useRef(false);
 
     useEffect(() => {
+        // Only initialize camera position on first load
+        if (!isFirstLoad && cameraInitializedRef.current) {
+            return;
+        }
+
         const rows = data.length;
         const cols = data[0]?.length ?? 0;
         const width = Math.max(1, cols - 1);
         const depth = Math.max(1, rows - 1);
-        const height = Math.max(1, SURFACE_MAX_HEIGHT);
+        const valueRange = Math.max(stats.max - stats.min, 1e-6);
+        const height =
+            heightMode === "normalized"
+                ? Math.max(1, SURFACE_NORMALIZED_HEIGHT)
+                : Math.max(1, valueRange);
         const size = Math.max(width, depth, height);
 
         camera.position.set(size * 0.95, size * 0.75, size * 0.95);
@@ -180,14 +211,16 @@ export function CameraRig({ data, stats }: { data: Grid; stats: GridStats }) {
             controls.target.set(0, 0, 0);
             controls.update?.();
         }
-    }, [camera, data, stats]);
 
-    const size = Math.max(
-        data[0]?.length ?? 1,
-        data.length,
-        SURFACE_MAX_HEIGHT,
-        1
-    );
+        cameraInitializedRef.current = true;
+    }, [isFirstLoad, camera, data, stats, heightMode]);
+
+    const valueRange = Math.max(stats.max - stats.min, 1e-6);
+    const height =
+        heightMode === "normalized"
+            ? Math.max(1, SURFACE_NORMALIZED_HEIGHT)
+            : Math.max(1, valueRange);
+    const size = Math.max(data[0]?.length ?? 1, data.length, height, 1);
 
     return (
         <OrbitControls

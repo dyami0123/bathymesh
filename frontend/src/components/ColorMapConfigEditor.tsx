@@ -32,6 +32,12 @@ function parseDraftNumber(rawValue: string): number | null {
     return Number.isFinite(parsed) ? parsed : null;
 }
 
+/** Parse and round to integer */
+function parseDraftIntNumber(rawValue: string): number | null {
+    const parsed = parseDraftNumber(rawValue);
+    return parsed !== null ? Math.round(parsed) : null;
+}
+
 function parseColorMap(
     colorMap: Record<string, unknown>,
     fallbackFuzziness: number
@@ -158,8 +164,6 @@ export function ColorMapConfigEditor() {
         setMaxFuzzinessDraft(maxFuzziness.toString());
     }, [maxFuzziness]);
 
-    const visualizationHeightPx = Math.max(220, entries.length * 92);
-
     const entriesByColor = useMemo(() => {
         return new Map(entries.map(({ color, entry }) => [color, entry]));
     }, [entries]);
@@ -236,7 +240,10 @@ export function ColorMapConfigEditor() {
             const y = Math.min(Math.max(clientY, rect.top), rect.bottom);
             const ratio = (y - rect.top) / rect.height;
             const nextValue = displayRangeMax - ratio * range;
-            updateColorValue(color, nextValue);
+
+            // Snap to 0.1 increments
+            const snappedValue = Math.round(nextValue * 10) / 10;
+            updateColorValue(color, snappedValue);
         },
         [displayRangeMax, displayRangeMin, updateColorValue]
     );
@@ -316,7 +323,7 @@ export function ColorMapConfigEditor() {
     );
 
     const commitDisplayRangeMaxDraft = useCallback(() => {
-        const parsed = parseDraftNumber(displayRangeMaxDraft);
+        const parsed = parseDraftIntNumber(displayRangeMaxDraft);
         if (parsed === null) {
             setDisplayRangeMaxDraft(displayRangeMax.toString());
             return;
@@ -325,7 +332,7 @@ export function ColorMapConfigEditor() {
     }, [displayRangeMaxDraft, displayRangeMax, onChangeDisplayRangeMax]);
 
     const commitDisplayRangeMinDraft = useCallback(() => {
-        const parsed = parseDraftNumber(displayRangeMinDraft);
+        const parsed = parseDraftIntNumber(displayRangeMinDraft);
         if (parsed === null) {
             setDisplayRangeMinDraft(displayRangeMin.toString());
             return;
@@ -334,7 +341,7 @@ export function ColorMapConfigEditor() {
     }, [displayRangeMinDraft, displayRangeMin, onChangeDisplayRangeMin]);
 
     const commitMaxFuzzinessDraft = useCallback(() => {
-        const parsed = parseDraftNumber(maxFuzzinessDraft);
+        const parsed = parseDraftIntNumber(maxFuzzinessDraft);
         if (parsed === null) {
             setMaxFuzzinessDraft(maxFuzziness.toString());
             return;
@@ -346,6 +353,39 @@ export function ColorMapConfigEditor() {
         const safeMax = Math.max(maxFuzziness, 0.0001);
         const ratio = Math.min(Math.max(fuzziness / safeMax, 0), 1);
         return 20 + ratio * 70;
+    };
+
+    /** Generate grid lines with nice intervals */
+    const generateGridLines = (): Array<{ value: number; percent: number }> => {
+        const range = displayRangeMax - displayRangeMin;
+        if (range <= 0 || !Number.isFinite(range)) return [];
+
+        const lines: Array<{ value: number; percent: number }> = [];
+
+        // Determine interval size for grid (try to get 5-10 grid lines)
+        let interval = 1;
+        if (range <= 1) interval = 0.1;
+        else if (range <= 5) interval = 0.5;
+        else if (range <= 10) interval = 1;
+        else if (range <= 20) interval = 2;
+        else if (range <= 50) interval = 5;
+        else interval = 10;
+
+        // Start from a multiple of interval
+        const startValue = Math.ceil(displayRangeMin / interval) * interval;
+
+        for (
+            let value = startValue;
+            value <= displayRangeMax;
+            value += interval
+        ) {
+            if (value >= displayRangeMin) {
+                const percent = getMarkerTopPercent(value);
+                lines.push({ value, percent });
+            }
+        }
+
+        return lines;
     };
 
     const togglePickTarget = (target: PickTarget) => {
@@ -416,14 +456,8 @@ export function ColorMapConfigEditor() {
     ]);
 
     return (
-        <Card as="section">
-            <div className="mb-3 flex items-center justify-between">
-                <Heading>Colormap Editor</Heading>
-                <span className="text-xs text-gray-500">
-                    Changes sync to backend automatically
-                </span>
-            </div>
-
+        <div className="h-full overflow-y-auto">
+            <label className="text-zinc-700">Color Editor</label>
             {entries.length === 0 ? (
                 <p className="mb-3 rounded bg-gray-50 px-3 py-2 text-sm text-gray-600">
                     No color mappings yet. Add one below.
@@ -431,10 +465,7 @@ export function ColorMapConfigEditor() {
             ) : null}
 
             <div className="flex items-stretch gap-3">
-                <div
-                    className="w-full shrink-0 rounded border border-gray-200 bg-gray-50 px-2 py-2"
-                    style={{ height: visualizationHeightPx }}
-                >
+                <div className="w-full shrink-0 rounded border border-gray-200 bg-gray-50 px-2 py-2 min-h-100 max-h-[70vh]">
                     <div className="flex h-full flex-col items-center gap-2">
                         <div className="w-1/2 flex">
                             <label
@@ -464,6 +495,21 @@ export function ColorMapConfigEditor() {
 
                         <div ref={railRef} className="relative w-full flex-1">
                             <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-gray-300" />
+
+                            {/* Grid lines and y-axis labels */}
+                            {generateGridLines().map((gridLine) => (
+                                <div
+                                    key={`grid-${gridLine.value}`}
+                                    className="absolute left-0 right-0 flex items-center"
+                                    style={{ top: `${gridLine.percent}%` }}
+                                >
+                                    <div className="w-8 text-right pr-2 text-xs text-gray-400">
+                                        {gridLine.value.toFixed(1)}
+                                    </div>
+                                    <div className="flex-1 h-px bg-gray-200" />
+                                </div>
+                            ))}
+
                             {entries.map(({ color, entry }) => (
                                 <div
                                     key={`marker-${color}`}
@@ -625,17 +671,39 @@ export function ColorMapConfigEditor() {
                             />
                         </div>
 
-                        <Button
-                            onClick={addEntry}
-                            style={{
-                                backgroundColor: newColor,
-                            }}
-                        >
-                            Add Color
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                onClick={addEntry}
+                                style={{
+                                    backgroundColor: newColor,
+                                }}
+                            >
+                                Add Color
+                            </Button>
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    togglePickTarget({
+                                        type: "new",
+                                    })
+                                }
+                                className={cn(
+                                    "flex h-9 w-9 items-center justify-center rounded border transition-colors",
+                                    isPickTargetActive({
+                                        type: "new",
+                                    })
+                                        ? "border-blue-500 bg-blue-100 text-blue-700"
+                                        : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+                                )}
+                                title="Pick color from mesh"
+                                aria-label="Pick color from mesh for new color"
+                            >
+                                <EyedropperIcon className="h-4 w-4" />
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </Card>
+        </div>
     );
 }
