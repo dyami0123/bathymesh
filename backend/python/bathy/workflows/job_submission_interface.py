@@ -2,6 +2,7 @@ from .job_runner import job_runner, JobStatus
 
 from .generate_mesh import generate_mesh
 from .process_image import process_image
+from bathy.viz.contours import contour_plot
 from bathy.database_interface import DatabaseInterface
 from typing import Literal
 from dataclasses import dataclass
@@ -102,17 +103,34 @@ def submit_job(
     elif job_type == "generate_mesh":
 
         def run_mesh_job():
+            from pathlib import Path
+
             project_config = DatabaseInterface.get_config(project_id=project_id)
-            heightmap_data = DatabaseInterface.get_heightmap_data(
-                project_id=project_id, is_preview=False
+
+            # Get the heightmap file path
+            heightmap_path = DatabaseInterface.get_path(
+                project_id=project_id,
+                filename=f"{project_id}_heightmap.npy",
+                is_preview=False,
             )
 
-            if heightmap_data is None:
-                raise ValueError(f"No heightmap found for project '{project_id}'")
+            if not heightmap_path.exists():
+                raise ValueError(f"No heightmap file found at {heightmap_path}")
 
-            meshdata, _ = generate_mesh(
-                heightmap_data=heightmap_data.data,
-                project_config=DatabaseInterface.get_config(project_id=project_id),
+            meshdata, generator = generate_mesh(
+                filepath=heightmap_path,
+                config=project_config.mesh_generation,
+            )
+
+            contour_plot_filepath = DatabaseInterface.get_path(
+                project_id=project_id,
+                filename=f"{project_id}_contours.png",
+                is_preview=False,
+            )
+
+            contour_plot(
+                generator=generator,
+                save_path=contour_plot_filepath,
             )
 
             DatabaseInterface.set_mesh_data(

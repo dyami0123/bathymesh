@@ -7,9 +7,11 @@ import type { ColorMode } from "@/data_processing";
 import { Spinner } from "./Spinner";
 import { JobSubmitButton } from "./jobSubmitter";
 import { HeightmapSceneCanvas } from "./HeightmapSceneCanvas";
+import { MeshControls } from "./MeshControls";
 import { cn } from "@/lib/cn";
 import { button, badge } from "@/components/ui/styles";
 import { useTerrainSurfaceData } from "@/hooks/useTerrainSurfaceData";
+import { useMeshData } from "@/hooks/useMeshData";
 
 export function HeightmapViewer() {
     const { isPickingColor } = useColorPicker();
@@ -23,11 +25,16 @@ export function HeightmapViewer() {
         refreshSurfaceData,
     } = useTerrainSurfaceData();
 
+    const { meshState, isLoading, calculateMesh, viewMesh, clearMesh } =
+        useMeshData();
+
     const [colorMode, setColorMode] = useState<ColorMode>("height");
     const [heightMode, setHeightMode] = useState<"normalized" | "absolute">(
         "normalized"
     );
     const [showDebugLines, setShowDebugLines] = useState(true);
+    const [showHeightmapMesh, setShowHeightmapMesh] = useState(true);
+    const [meshWireframe, setMeshWireframe] = useState(false);
 
     useEffect(() => {
         if (colorMode === "image" && !surfaceData?.imageColors) {
@@ -212,6 +219,33 @@ export function HeightmapViewer() {
                         Debug
                     </button>
 
+                    <button
+                        type="button"
+                        onClick={() => setShowHeightmapMesh((prev) => !prev)}
+                        className={cn(
+                            button({
+                                intent: showHeightmapMesh ? "primary" : "ghost",
+                                shape: "pill",
+                            })
+                        )}
+                    >
+                        Heightmap
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setMeshWireframe((prev) => !prev)}
+                        disabled={meshState.type !== "loaded"}
+                        className={cn(
+                            button({
+                                intent: meshWireframe ? "primary" : "ghost",
+                                shape: "pill",
+                            })
+                        )}
+                    >
+                        Wireframe
+                    </button>
+
                     <div className="mx-1 h-5 w-px bg-gray-200 " />
 
                     <button
@@ -226,6 +260,22 @@ export function HeightmapViewer() {
                         {refreshing ? <Spinner /> : null}
                         <span>{refreshing ? "Refreshing" : "Refresh"}</span>
                     </button>
+
+                    <div className="mx-1 h-5 w-px bg-gray-200 " />
+
+                    <MeshControls
+                        isLoading={isLoading}
+                        isMeshVisible={meshState.type === "loaded"}
+                        hasError={meshState.type === "error"}
+                        errorMessage={
+                            meshState.type === "error"
+                                ? meshState.message
+                                : undefined
+                        }
+                        onCalculate={calculateMesh}
+                        onView={viewMesh}
+                        onClear={clearMesh}
+                    />
                 </div>
 
                 {refreshing ? (
@@ -253,6 +303,13 @@ export function HeightmapViewer() {
                         isFirstLoad={isFirstLoad}
                         heightMode={heightMode}
                         showDebugLines={showDebugLines}
+                        showHeightmapMesh={showHeightmapMesh}
+                        meshWireframe={meshWireframe}
+                        meshData={
+                            meshState.type === "loaded"
+                                ? meshState.data
+                                : undefined
+                        }
                         onPickColor={handlePickColor}
                         onHover={handleHover}
                         onHoverEnd={handleHoverEnd}

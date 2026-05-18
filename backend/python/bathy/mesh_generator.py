@@ -56,6 +56,9 @@ class MeshGenerator:
             f"Number of levels: {len(self.config.heightmap_processing.thresholds)}"
         )
 
+        # Store original dimensions for coordinate system alignment
+        original_height, original_width = heightmap_data.data.shape
+
         # Generate meshes for each level
         all_meshes = []
 
@@ -104,7 +107,11 @@ class MeshGenerator:
             logger.info("Processing combined mesh...")
             combined_mesh = self.mesh_processor.process_mesh(combined_mesh)
 
-        return MeshData(data=combined_mesh)
+        return MeshData(
+            data=combined_mesh,
+            original_width=original_width,
+            original_height=original_height,
+        )
 
     def generate_mesh(
         self,

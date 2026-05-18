@@ -238,8 +238,23 @@ class DatabaseInterfaceClass:
         )
 
         triange_data = o3d.io.read_triangle_mesh(mesh_data_path)
+        original_width: int | None = None
+        original_height: int | None = None
 
-        return MeshData(data=triange_data)
+        # STL does not store custom metadata, so recover dimensions from
+        # the full-resolution heightmap used for mesh generation.
+        heightmap_data = self.get_heightmap_data(
+            project_id=project_id,
+            is_preview=False,
+        )
+        if heightmap_data is not None:
+            original_height, original_width = heightmap_data.data.shape
+
+        return MeshData(
+            data=triange_data,
+            original_width=original_width,
+            original_height=original_height,
+        )
 
     def get_path(self, project_id: str, filename: str, is_preview: bool) -> Path:
         return data_dir / project_id / ("preview" if is_preview else "final") / filename

@@ -1,8 +1,11 @@
 import { Canvas } from "@react-three/fiber";
+import { useEffect } from "react";
 import type { SurfaceData } from "@/data_processing";
 import type { HeightMode } from "@/data_processing/buildSurfaceGeometry";
+import type { MeshDataJson } from "@/client";
 import { SurfaceMesh, CameraRig } from "./SurfaceMesh";
 import { DebugLineShapes } from "./DebugLineShapes";
+import { MeshDisplay } from "./MeshDisplay";
 
 type HeightmapSceneCanvasProps = {
     surfaceData: SurfaceData;
@@ -11,6 +14,9 @@ type HeightmapSceneCanvasProps = {
     isFirstLoad: boolean;
     heightMode: HeightMode;
     showDebugLines?: boolean;
+    showHeightmapMesh?: boolean;
+    meshWireframe?: boolean;
+    meshData?: MeshDataJson;
     onPickColor: (row: number, col: number) => void;
     onHover: (
         row: number,
@@ -28,10 +34,20 @@ export function HeightmapSceneCanvas({
     isFirstLoad,
     heightMode,
     showDebugLines = false,
+    showHeightmapMesh = true,
+    meshWireframe = false,
+    meshData,
     onPickColor,
     onHover,
     onHoverEnd,
 }: HeightmapSceneCanvasProps) {
+    useEffect(() => {
+        console.log(
+            "[HeightmapSceneCanvas] meshData changed:",
+            meshData ? "present" : "absent"
+        );
+    }, [meshData]);
+
     return (
         <Canvas shadows dpr={[1, 2]} camera={{ fov: 45 }}>
             <color attach="background" args={["#ffffff"]} />
@@ -43,16 +59,22 @@ export function HeightmapSceneCanvas({
             />
             <directionalLight position={[-20, 10, -20]} intensity={0.35} />
 
-            <SurfaceMesh
-                data={surfaceData.grid}
-                stats={surfaceData.stats}
-                activeColors={activeColors}
-                onPickColor={onPickColor}
-                isPickingActive={isPickingColor}
-                onHover={onHover}
-                onHoverEnd={onHoverEnd}
-                heightMode={heightMode}
-            />
+            {showHeightmapMesh ? (
+                <SurfaceMesh
+                    data={surfaceData.grid}
+                    stats={surfaceData.stats}
+                    activeColors={activeColors}
+                    onPickColor={onPickColor}
+                    isPickingActive={isPickingColor}
+                    onHover={onHover}
+                    onHoverEnd={onHoverEnd}
+                    heightMode={heightMode}
+                />
+            ) : null}
+
+            {meshData ? (
+                <MeshDisplay meshData={meshData} wireframe={meshWireframe} />
+            ) : null}
 
             {showDebugLines ? (
                 <DebugLineShapes

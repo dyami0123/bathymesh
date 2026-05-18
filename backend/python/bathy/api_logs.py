@@ -47,6 +47,11 @@ def _build_uvicorn_log_config(log_level_name: str) -> dict[str, object]:
     loggers["uvicorn"]["level"] = log_level_name
     loggers["uvicorn.error"]["level"] = log_level_name
     loggers["uvicorn.access"]["level"] = log_level_name
+    loggers["matplotlib.font_manager"] = {
+        "handlers": ["default"],
+        "level": "INFO",
+        "propagate": False,
+    }
 
     config["root"] = {
         "handlers": ["default"],

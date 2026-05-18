@@ -7,6 +7,10 @@ from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 def contour_plot(
     generator: MeshGenerator, save_path: Union[None, Path]
@@ -20,6 +24,14 @@ def contour_plot(
         contours = snap.contours
         gdf = gpd.GeoDataFrame(geometry=contours)
         gdf["level"] = idx
+
+        if len(gdf) == 0:
+            logger.warning(
+                f"No contours found for threshold {idx}, skipping plot for this level"
+            )
+            logger.warning(contours)
+            continue
+
         gdf.plot(
             ax=ax,
             alpha=0.5,

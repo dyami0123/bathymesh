@@ -240,6 +240,14 @@ export type MeshDataJson = {
      * Triangles
      */
     triangles: Array<Array<number>>;
+    /**
+     * Original Width
+     */
+    original_width?: number | null;
+    /**
+     * Original Height
+     */
+    original_height?: number | null;
 };
 
 /**
